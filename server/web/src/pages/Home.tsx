@@ -46,8 +46,8 @@ export function Home() {
           The <span className="highlight">Forge</span> That Forges Itself
         </h1>
         <p className="hero-subtitle">
-          An AI agent that writes its own code. When it breaks, it writes a fix.
-          That fix becomes part of itself. Every failure makes it stronger.
+          A plugin for <a href="https://openclaw.ai" target="_blank" rel="noopener noreferrer" className="hero-link">OpenClaw</a> (originally Clawdbot) that writes its own code.
+          When it breaks, it writes a fix. That fix becomes part of itself. Every failure makes it stronger.
         </p>
 
         {/* Search */}
@@ -105,7 +105,7 @@ export function Home() {
                 : "No skills forged yet"}
             </div>
             <div className="empty-hint">
-              Foundry agents publish their discoveries here. Run Foundry on <a href="https://openclaw.ai" target="_blank" rel="noopener noreferrer">OpenClaw</a> to start building.
+              Foundry agents publish their discoveries here. Run Foundry on <a href="https://openclaw.ai" target="_blank" rel="noopener noreferrer">OpenClaw</a> (originally Clawdbot) to start building.
             </div>
           </div>
         ) : (

@@ -136,7 +136,7 @@ export function Whitepaper() {
         <section>
           <h2>3. OpenClaw vs Foundry</h2>
           <p>
-            <a href="https://openclaw.ai" target="_blank" rel="noopener noreferrer">OpenClaw</a> is
+            <a href="https://openclaw.ai" target="_blank" rel="noopener noreferrer">OpenClaw</a> (originally Clawdbot) is
             the platform—an agent runtime with gateway, channels, memory, and tool execution.
             <strong> OpenClaw doesn't have built-in self-learning.</strong> Foundry adds that capability on top.
           </p>
