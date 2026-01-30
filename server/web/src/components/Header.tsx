@@ -13,6 +13,14 @@ export function Header() {
         </Link>
 
         <nav className="header-nav">
+          <a
+            href="https://openclaw.ai"
+            className="nav-link"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            OpenClaw
+          </a>
           <Link to="/" className="nav-link">
             Marketplace
           </Link>

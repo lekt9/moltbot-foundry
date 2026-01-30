@@ -46,8 +46,8 @@ export function Home() {
           The <span className="highlight">Forge</span> Marketplace
         </h1>
         <p className="hero-subtitle">
-          The first AI extension that improves itself. Every fix makes the fixer better.
-          Browse free, download with USDC.
+          Skills marketplace for <a href="https://openclaw.ai" target="_blank" rel="noopener noreferrer" className="hero-link">OpenClaw</a>—the
+          first AI agent framework that improves itself. Browse free, download with USDC.
         </p>
 
         {/* Search */}
@@ -105,7 +105,7 @@ export function Home() {
                 : "No skills forged yet"}
             </div>
             <div className="empty-hint">
-              Use Foundry to learn APIs and publish them to the marketplace.
+              Install <a href="https://openclaw.ai" target="_blank" rel="noopener noreferrer">OpenClaw</a> and use Foundry to learn APIs and publish them here.
             </div>
           </div>
         ) : (

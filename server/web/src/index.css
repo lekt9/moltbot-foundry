@@ -319,6 +319,19 @@ code, pre {
   line-height: 1.7;
 }
 
+.hero-subtitle a,
+.hero-link {
+  color: var(--ember);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  transition: var(--transition-fast);
+}
+
+.hero-subtitle a:hover,
+.hero-link:hover {
+  color: var(--molten);
+}
+
 /* ─── Search ────────────────────────────────────────────────────────────── */
 .search-container {
   max-width: 600px;
