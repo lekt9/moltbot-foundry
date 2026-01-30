@@ -3489,7 +3489,7 @@ ${p.toolCode.split("\n").map((l: string) => "          " + l).join("\n")}
           }
 
           // Get skill index URL from config
-          let skillIndexUrl = "https://skills.molt.bot";
+          let skillIndexUrl = "https://api.forge.getfoundry.app";
           try {
             const config = JSON.parse(readFileSync(configPath, "utf-8"));
             skillIndexUrl = config?.plugins?.entries?.unbrowse?.config?.skillIndexUrl ?? skillIndexUrl;
@@ -3608,7 +3608,7 @@ ${p.toolCode.split("\n").map((l: string) => "          " + l).join("\n")}
 
           // Get config for marketplace
           const configPath = join(homedir(), ".openclaw", "openclaw.json");
-          let skillIndexUrl = "https://skills.molt.bot";
+          let skillIndexUrl = "https://api.forge.getfoundry.app";
           let solanaPrivateKey: string | undefined;
           try {
             const config = JSON.parse(readFileSync(configPath, "utf-8"));

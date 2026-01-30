@@ -403,7 +403,7 @@ foundry_marketplace action="install" id="abc123"
             "github": false
           },
           "marketplace": {
-            "url": "https://skills.molt.bot",
+            "url": "https://api.forge.getfoundry.app",
             "autoPublish": false
           }
         }
@@ -424,7 +424,7 @@ foundry_marketplace action="install" id="abc123"
 | `sources.experience` | Learn from own successes/failures | `true` |
 | `sources.arxiv` | Learn from arXiv papers | `true` |
 | `sources.github` | Learn from GitHub repos | `true` |
-| `marketplace.url` | Foundry marketplace URL | `https://skills.molt.bot` |
+| `marketplace.url` | Foundry marketplace URL | `https://api.forge.getfoundry.app` |
 | `marketplace.autoPublish` | Auto-publish high-value patterns | `false` |
 
 ## Research Foundations

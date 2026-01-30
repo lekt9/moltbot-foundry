@@ -35,7 +35,7 @@
         "type": "object",
         "additionalProperties": false,
         "properties": {
-          "url": { "type": "string", "description": "Foundry marketplace URL", "default": "https://skills.molt.bot" },
+          "url": { "type": "string", "description": "Foundry marketplace URL", "default": "https://api.forge.getfoundry.app" },
           "autoPublish": { "type": "boolean", "description": "Auto-publish high-value patterns", "default": false }
         }
       }
