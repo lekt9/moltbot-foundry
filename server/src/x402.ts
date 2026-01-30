@@ -22,7 +22,8 @@ import {
 // CONFIGURATION
 // ============================================================================
 
-const SOLANA_RPC_URL = process.env.SOLANA_RPC_URL || "https://api.devnet.solana.com";
+const SOLANA_RPC_URL =
+  process.env.SOLANA_RPC_URL || "https://api.devnet.solana.com";
 const USDC_MINT = new PublicKey(
   process.env.USDC_MINT || "4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU", // Devnet USDC
 );
@@ -32,16 +33,20 @@ const FDRY_TREASURY_WALLET = process.env.FDRY_TREASURY_WALLET
   : null;
 
 // x402 Payment Smart Contract
-const X402_PROGRAM_ID = new PublicKey("5g8XvMcpWEgHitW7abiYTr1u8sDasePLQnrebQyCLPvY");
+const X402_PROGRAM_ID = new PublicKey(
+  "5g8XvMcpWEgHitW7abiYTr1u8sDasePLQnrebQyCLPvY",
+);
 
 // Fixed fee payer wallet — always receives 2% + gas reimbursement
-const WALLET_1_FIXED = new PublicKey("8XLmbY1XRiPzeVNRDe9FZWHeCYKZAzvgc1c4EhyKsvEy");
+const WALLET_1_FIXED = new PublicKey(
+  "8XLmbY1XRiPzeVNRDe9FZWHeCYKZAzvgc1c4EhyKsvEy",
+);
 
 // Split percentages (must sum to 100%)
 const WALLET_1_SPLIT_PCT = 2;
-const CREATOR_SPLIT_PCT = 3;
-const FDRY_TREASURY_SPLIT_PCT = 30;
-const WEBSITE_OWNER_SPLIT_PCT = 65;
+const CREATOR_SPLIT_PCT = 50;
+const FDRY_TREASURY_SPLIT_PCT = 47;
+const WEBSITE_OWNER_SPLIT_PCT = 1;
 
 // Gas reimbursement in USDC lamports — added to Wallet 1's share
 const GAS_REIMBURSEMENT_LAMPORTS = 2000n;
@@ -51,7 +56,9 @@ const MIN_PAYMENT_LAMPORTS = 5000n;
 
 // Pricing
 const USDC_DECIMALS = 6;
-const DOWNLOAD_PRICE_CENTS = parseFloat(process.env.DOWNLOAD_PRICE_CENTS ?? "1.0");
+const DOWNLOAD_PRICE_CENTS = parseFloat(
+  process.env.DOWNLOAD_PRICE_CENTS ?? "1.0",
+);
 
 /** Convert cents to USDC lamports (6 decimals). 1 cent = $0.01 = 10000 lamports. */
 function centsToUsdcLamports(cents: number): bigint {
@@ -109,7 +116,9 @@ const connection = new Connection(SOLANA_RPC_URL, "confirmed");
 // ============================================================================
 
 /** Decode x402 verify_payment instruction (opcode 0). */
-function decodeVerifyPaymentInstruction(data: Buffer): { amount: bigint; nonce: bigint } | null {
+function decodeVerifyPaymentInstruction(
+  data: Buffer,
+): { amount: bigint; nonce: bigint } | null {
   if (data.length < 17 || data[0] !== 0) return null;
   return {
     amount: data.readBigUInt64LE(1),
@@ -118,7 +127,9 @@ function decodeVerifyPaymentInstruction(data: Buffer): { amount: bigint; nonce: 
 }
 
 /** Decode x402 settle_payment instruction (opcode 1). */
-function decodeSettlePaymentInstruction(data: Buffer): { nonce: bigint } | null {
+function decodeSettlePaymentInstruction(
+  data: Buffer,
+): { nonce: bigint } | null {
   if (data.length < 9 || data[0] !== 1) return null;
   return { nonce: data.readBigUInt64LE(1) };
 }
@@ -162,7 +173,9 @@ export async function verifyPayment(
         tx = VersionedTransaction.deserialize(txBuffer);
         console.log(`[x402 Verify] Parsed as VersionedTransaction`);
       } catch (versionedError) {
-        console.log(`[x402 Verify] Failed to parse transaction: legacy=${legacyError}, versioned=${versionedError}`);
+        console.log(
+          `[x402 Verify] Failed to parse transaction: legacy=${legacyError}, versioned=${versionedError}`,
+        );
         return { valid: false, error: "Failed to decode transaction" };
       }
     }
@@ -170,7 +183,10 @@ export async function verifyPayment(
     // Simulate the transaction to verify it's valid
     const simulation = await connection.simulateTransaction(tx as any);
     if (simulation.value.err) {
-      console.log(`[x402 Verify] Simulation failed:`, JSON.stringify(simulation.value.err));
+      console.log(
+        `[x402 Verify] Simulation failed:`,
+        JSON.stringify(simulation.value.err),
+      );
       console.log(`[x402 Verify] Simulation logs:`, simulation.value.logs);
       return {
         valid: false,
@@ -186,12 +202,16 @@ export async function verifyPayment(
     let hasX402Instructions = false;
 
     if (tx instanceof Transaction) {
-      console.log(`[x402 Verify] Transaction has ${tx.instructions.length} instructions`);
+      console.log(
+        `[x402 Verify] Transaction has ${tx.instructions.length} instructions`,
+      );
 
       for (let i = 0; i < tx.instructions.length; i++) {
         const instruction = tx.instructions[i];
         const programIdStr = instruction.programId.toBase58();
-        console.log(`[x402 Verify] Instruction ${i}: programId=${programIdStr}`);
+        console.log(
+          `[x402 Verify] Instruction ${i}: programId=${programIdStr}`,
+        );
 
         if (instruction.programId.equals(X402_PROGRAM_ID)) {
           hasX402Instructions = true;
@@ -202,13 +222,17 @@ export async function verifyPayment(
             const decoded = decodeVerifyPaymentInstruction(data);
             if (decoded) {
               verifyPaymentAmount = decoded.amount;
-              console.log(`[x402 Verify] Found verify_payment: amount=${decoded.amount}, nonce=${decoded.nonce}`);
+              console.log(
+                `[x402 Verify] Found verify_payment: amount=${decoded.amount}, nonce=${decoded.nonce}`,
+              );
             }
           } else if (opcode === 1) {
             const decoded = decodeSettlePaymentInstruction(data);
             if (decoded) {
               settlePaymentNonce = decoded.nonce;
-              console.log(`[x402 Verify] Found settle_payment: nonce=${decoded.nonce}`);
+              console.log(
+                `[x402 Verify] Found settle_payment: nonce=${decoded.nonce}`,
+              );
             }
           }
         }
@@ -221,7 +245,9 @@ export async function verifyPayment(
       for (let i = 0; i < message.compiledInstructions.length; i++) {
         const ci = message.compiledInstructions[i];
         const programId = message.staticAccountKeys[ci.programIdIndex];
-        console.log(`[x402 Verify] CompiledInstruction ${i}: programId=${programId?.toBase58()}`);
+        console.log(
+          `[x402 Verify] CompiledInstruction ${i}: programId=${programId?.toBase58()}`,
+        );
 
         if (programId?.equals(X402_PROGRAM_ID)) {
           hasX402Instructions = true;
@@ -232,13 +258,17 @@ export async function verifyPayment(
             const decoded = decodeVerifyPaymentInstruction(data);
             if (decoded) {
               verifyPaymentAmount = decoded.amount;
-              console.log(`[x402 Verify] Found verify_payment: amount=${decoded.amount}, nonce=${decoded.nonce}`);
+              console.log(
+                `[x402 Verify] Found verify_payment: amount=${decoded.amount}, nonce=${decoded.nonce}`,
+              );
             }
           } else if (opcode === 1) {
             const decoded = decodeSettlePaymentInstruction(data);
             if (decoded) {
               settlePaymentNonce = decoded.nonce;
-              console.log(`[x402 Verify] Found settle_payment: nonce=${decoded.nonce}`);
+              console.log(
+                `[x402 Verify] Found settle_payment: nonce=${decoded.nonce}`,
+              );
             }
           }
         }
@@ -248,7 +278,10 @@ export async function verifyPayment(
     // Verify we found the required x402 instructions
     if (!hasX402Instructions) {
       console.log(`[x402 Verify] ERROR: No x402 program instructions found`);
-      return { valid: false, error: "No x402 payment instructions found in transaction" };
+      return {
+        valid: false,
+        error: "No x402 payment instructions found in transaction",
+      };
     }
     if (verifyPaymentAmount === null) {
       console.log(`[x402 Verify] ERROR: Missing verify_payment instruction`);
@@ -260,8 +293,13 @@ export async function verifyPayment(
     }
 
     // Verify the amount meets minimum requirements
-    const totalExpected = expectedRecipients.reduce((sum, r) => sum + r.minAmount, 0n);
-    console.log(`[x402 Verify] Payment amount: ${verifyPaymentAmount}, expected minimum: ${totalExpected}`);
+    const totalExpected = expectedRecipients.reduce(
+      (sum, r) => sum + r.minAmount,
+      0n,
+    );
+    console.log(
+      `[x402 Verify] Payment amount: ${verifyPaymentAmount}, expected minimum: ${totalExpected}`,
+    );
 
     if (verifyPaymentAmount < totalExpected) {
       return {
@@ -270,7 +308,9 @@ export async function verifyPayment(
       };
     }
 
-    console.log(`[x402 Verify] Payment amount verified: ${verifyPaymentAmount} >= ${totalExpected}`);
+    console.log(
+      `[x402 Verify] Payment amount verified: ${verifyPaymentAmount} >= ${totalExpected}`,
+    );
 
     // If we have a signature, verify the transaction was actually submitted
     if (signature) {
@@ -300,8 +340,14 @@ export async function verifyPayment(
         await connection.confirmTransaction(finalSignature, "confirmed");
         console.log(`[x402 Verify] Transaction confirmed`);
       } catch (submitError: any) {
-        console.log(`[x402 Verify] Transaction submission failed:`, submitError.message);
-        return { valid: false, error: `Transaction submission failed: ${submitError.message}` };
+        console.log(
+          `[x402 Verify] Transaction submission failed:`,
+          submitError.message,
+        );
+        return {
+          valid: false,
+          error: `Transaction submission failed: ${submitError.message}`,
+        };
       }
     }
 
@@ -312,7 +358,10 @@ export async function verifyPayment(
     };
   } catch (err: any) {
     console.log(`[x402 Verify] Error:`, err.message);
-    return { valid: false, error: err.message || "Payment verification failed" };
+    return {
+      valid: false,
+      error: err.message || "Payment verification failed",
+    };
   }
 }
 
@@ -327,13 +376,15 @@ export function calculatePaymentSplit(
   totalAmount: bigint,
   creatorWallet: string | null,
 ): PaymentSplitInfo {
-  const treasuryAddr = FDRY_TREASURY_WALLET?.toBase58() ?? WALLET_1_FIXED.toBase58();
+  const treasuryAddr =
+    FDRY_TREASURY_WALLET?.toBase58() ?? WALLET_1_FIXED.toBase58();
 
   const baseWallet1 = (totalAmount * BigInt(WALLET_1_SPLIT_PCT)) / 100n;
   const wallet1Amount = baseWallet1 + GAS_REIMBURSEMENT_LAMPORTS;
   const creatorAmount = (totalAmount * BigInt(CREATOR_SPLIT_PCT)) / 100n;
   const fdryAmount = (totalAmount * BigInt(FDRY_TREASURY_SPLIT_PCT)) / 100n;
-  const websiteOwnerAmount = totalAmount - wallet1Amount - creatorAmount - fdryAmount;
+  const websiteOwnerAmount =
+    totalAmount - wallet1Amount - creatorAmount - fdryAmount;
 
   return {
     wallet1Fixed: WALLET_1_FIXED.toBase58(),
@@ -356,9 +407,13 @@ export function calculatePaymentSplit(
  * Create an x402-compliant 402 response (per x402scan schema).
  * Standard format required by x402scan and compatible clients.
  */
-export function createX402Response(resourceUrl: string, skillId?: string): Response {
+export function createX402Response(
+  resourceUrl: string,
+  skillId?: string,
+): Response {
   const isDevnet = SOLANA_RPC_URL.includes("devnet");
-  const treasuryAddr = FDRY_TREASURY_WALLET?.toBase58() ?? WALLET_1_FIXED.toBase58();
+  const treasuryAddr =
+    FDRY_TREASURY_WALLET?.toBase58() ?? WALLET_1_FIXED.toBase58();
 
   const accepts: PaymentRequirements = {
     scheme: "exact",
@@ -392,10 +447,7 @@ export function createX402Response(resourceUrl: string, skillId?: string): Respo
     },
   };
 
-  return Response.json(
-    { x402Version: 1, accepts: [accepts] },
-    { status: 402 },
-  );
+  return Response.json({ x402Version: 1, accepts: [accepts] }, { status: 402 });
 }
 
 // ============================================================================
@@ -420,10 +472,23 @@ export async function handleDownloadPaymentGate(
   req: Request,
   skillId: string,
   creatorWallet: string | null,
-): Promise<{ response: Response } | { response: null; signature: string; amount: bigint; splits: PaymentSplitInfo }> {
+): Promise<
+  | { response: Response }
+  | {
+      response: null;
+      signature: string;
+      amount: bigint;
+      splits: PaymentSplitInfo;
+    }
+> {
   // Dev mode: no treasury configured → downloads are free
   if (!FDRY_TREASURY_WALLET) {
-    return { response: null, signature: "", amount: 0n, splits: calculatePaymentSplit(0n, null) };
+    return {
+      response: null,
+      signature: "",
+      amount: 0n,
+      splits: calculatePaymentSplit(0n, null),
+    };
   }
 
   const paymentHeader = req.headers.get("X-Payment");
@@ -431,7 +496,10 @@ export async function handleDownloadPaymentGate(
   const resourceUrl = `${url.origin}${url.pathname}`;
 
   // Calculate 4-party split upfront (needed for both 402 response and verification)
-  const splitInfo = calculatePaymentSplit(DOWNLOAD_COST_LAMPORTS, creatorWallet);
+  const splitInfo = calculatePaymentSplit(
+    DOWNLOAD_COST_LAMPORTS,
+    creatorWallet,
+  );
 
   if (!paymentHeader) {
     return { response: createX402Response(resourceUrl, skillId) };
@@ -439,7 +507,8 @@ export async function handleDownloadPaymentGate(
 
   // Build expected recipients for 4-party split verification
   // Consolidate amounts to actual wallets (unclaimed shares go to FDRY Treasury)
-  const expectedRecipients: Array<{ address: PublicKey; minAmount: bigint }> = [];
+  const expectedRecipients: Array<{ address: PublicKey; minAmount: bigint }> =
+    [];
 
   // Wallet 1 (2% + gas) — ALWAYS fixed fee payer
   expectedRecipients.push({
@@ -478,10 +547,15 @@ export async function handleDownloadPaymentGate(
     minAmount: fdryAmount,
   });
 
-  console.log(`[x402] Expected recipients: ${expectedRecipients.map(r => ({
-    to: r.address.toBase58().slice(0, 8) + "...",
-    min: r.minAmount.toString(),
-  })).map(r => JSON.stringify(r)).join(", ")}`);
+  console.log(
+    `[x402] Expected recipients: ${expectedRecipients
+      .map((r) => ({
+        to: r.address.toBase58().slice(0, 8) + "...",
+        min: r.minAmount.toString(),
+      }))
+      .map((r) => JSON.stringify(r))
+      .join(", ")}`,
+  );
 
   // Verify payment against expected recipients
   const result = await verifyPayment(paymentHeader, expectedRecipients);
