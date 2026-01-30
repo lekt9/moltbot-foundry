@@ -6,7 +6,7 @@ export function Whitepaper() {
           <div className="whitepaper-badge">Research</div>
           <h1>The Forge That Forges Itself</h1>
           <p className="whitepaper-subtitle">
-            The AI that rewrites its own brain. Every fix makes the fixer better.
+            The system that writes the code IS the code being written.
           </p>
           <div className="whitepaper-meta">
             <span>Foundry Labs</span>
@@ -18,11 +18,14 @@ export function Whitepaper() {
         <section className="whitepaper-abstract">
           <h2>Abstract</h2>
           <p>
-            Foundry is an AI agent that writes its own code. When it fails at a task, it doesn't just
-            report the error—it writes a fix and deploys it into its own codebase. The system that
-            writes the code IS the code being written. Each fix makes Foundry better at everything
-            it does. This paper presents the research foundations, implementation architecture, and
-            economic model powering the first AI agent that improves itself by rewriting its own brain.
+            Foundry is an AI agent that writes its own code. Not code for you—code for <em>itself</em>.
+            When Foundry fails at a task, it researches the problem, writes a fix, and deploys that fix
+            into its own codebase. The system that writes the code IS the code being written.
+          </p>
+          <p>
+            This creates compound improvement: each fix makes Foundry better at writing fixes. Traditional
+            software improves linearly—humans fix bugs, software does more. Foundry improves recursively—the
+            software fixes itself, getting faster at fixing itself.
           </p>
         </section>
 
@@ -368,7 +371,7 @@ export function Whitepaper() {
             the recursive loop is about Foundry improving itself.
           </p>
           <p className="thesis-statement">
-            <strong>The first AI extension that improves itself—every fix makes the fixer better.</strong>
+            <strong>The first AI agent that fixes itself. Every failure makes it stronger.</strong>
           </p>
         </section>
 
