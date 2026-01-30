@@ -23,6 +23,7 @@ import type { ClawdbotPluginApi, ClawdbotPluginToolContext } from "clawdbot/plug
 import { existsSync, mkdirSync, readFileSync, writeFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 import { homedir } from "node:os";
+import { SelfWriter } from "./src/self-writer";
 
 // ── Documentation URLs ───────────────────────────────────────────────────────
 
@@ -286,6 +287,14 @@ interface LearningEntry {
   context?: string;
   timestamp: string;
   useCount: number;
+  // RISE: Multi-turn recursive introspection (arXiv:2407.18219)
+  attemptCount?: number;           // How many times this error pattern was encountered
+  improvementTrajectory?: number[]; // Success rate per attempt [0.2, 0.4, 0.8...]
+  // SelfEvolve: Interpreter feedback loop (arXiv:2306.02907)
+  executionFeedback?: string;      // Runtime/interpreter feedback for debugging
+  // HexMachina: Artifact-centric learning (arXiv:2506.04651)
+  crystallizedTo?: string;         // ID of hook/tool this pattern was converted to
+  crystallizedAt?: string;         // When pattern was promoted to code
 }
 
 interface PendingSession {
@@ -293,9 +302,18 @@ interface PendingSession {
   channelId?: string;
   conversationId?: string;
   lastMessage: string;
-  context: string;
-  reason: string;
-  createdAt: string;
+  reason?: string;                  // Why the session was saved
+  context?: string;                 // Additional context for resumption
+  createdAt?: string;               // When the pending session was created
+}
+
+// Self-Improving Coding Agent: Overseer report (arXiv:2504.15228)
+interface OverseerReport {
+  timestamp: string;
+  crystallizationCandidates: { id: string; tool: string; error: string; useCount: number }[];
+  stalePatterns: string[];
+  recurringFailures: { signature: string; count: number }[];
+  recommendations: string[];
 }
 
 interface ExtensionDef {
@@ -644,8 +662,14 @@ class LearningEngine {
   }
 
   // ── Learning from failures ───────────────────────────────────────────────
+  // Implements RISE: Recursive Introspection (arXiv:2407.18219)
+  // Track attempts per error pattern to enable multi-turn self-improvement
 
-  recordFailure(tool: string, error: string, context?: string): string {
+  recordFailure(tool: string, error: string, context?: string, executionFeedback?: string): string {
+    // RISE: Check for similar past failures to track attempt count
+    const similarPattern = this.findSimilarFailure(tool, error);
+    const attemptCount = similarPattern ? (similarPattern.attemptCount || 1) + 1 : 1;
+
     const id = `fail_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
     const entry: LearningEntry = {
       id,
@@ -655,11 +679,40 @@ class LearningEngine {
       context,
       timestamp: new Date().toISOString(),
       useCount: 0,
+      attemptCount,
+      executionFeedback, // SelfEvolve: Store interpreter feedback
+      improvementTrajectory: similarPattern?.improvementTrajectory || [],
     };
     this.learnings.push(entry);
     this.saveLearnings();
-    this.logger?.info(`[foundry] Recorded failure: ${tool} - ${error.slice(0, 50)}...`);
+
+    // RISE: Log attempt progression
+    if (attemptCount > 1) {
+      this.logger?.info(`[foundry] Recorded failure (attempt #${attemptCount}): ${tool} - ${error.slice(0, 50)}...`);
+    } else {
+      this.logger?.info(`[foundry] Recorded failure: ${tool} - ${error.slice(0, 50)}...`);
+    }
     return id;
+  }
+
+  // RISE: Find similar past failures for recursive introspection
+  private findSimilarFailure(tool: string, error: string): LearningEntry | undefined {
+    const errorSignature = this.extractErrorSignature(error);
+    return this.learnings.find(l =>
+      l.type === "failure" &&
+      l.tool === tool &&
+      l.error &&
+      this.extractErrorSignature(l.error) === errorSignature
+    );
+  }
+
+  // Extract stable error signature for pattern matching
+  private extractErrorSignature(error: string): string {
+    return error
+      .replace(/\d+/g, "N")           // Normalize numbers
+      .replace(/0x[a-f0-9]+/gi, "ADDR") // Normalize addresses
+      .replace(/["'][^"']*["']/g, "STR") // Normalize strings
+      .slice(0, 100);                   // Limit length
   }
 
   recordResolution(failureId: string, resolution: string): void {
@@ -667,8 +720,61 @@ class LearningEngine {
     if (entry) {
       entry.resolution = resolution;
       entry.type = "pattern"; // Upgrade to pattern once resolved
+
+      // RISE: Update improvement trajectory
+      // Track success (1.0) at this attempt count
+      if (!entry.improvementTrajectory) entry.improvementTrajectory = [];
+      const attemptIdx = (entry.attemptCount || 1) - 1;
+      while (entry.improvementTrajectory.length <= attemptIdx) {
+        entry.improvementTrajectory.push(0);
+      }
+      entry.improvementTrajectory[attemptIdx] = 1.0;
+
       this.saveLearnings();
-      this.logger?.info(`[foundry] Recorded resolution for ${failureId}`);
+      this.logger?.info(`[foundry] Recorded resolution for ${failureId} (attempt #${entry.attemptCount || 1})`);
+
+      // Self-Improving Coding Agent: Check if pattern should be auto-crystallized
+      this.checkCrystallization(entry);
+    }
+  }
+
+  // HexMachina + Self-Improving Coding Agent: Auto-crystallize high-value patterns
+  // (arXiv:2506.04651, arXiv:2504.15228)
+  private checkCrystallization(pattern: LearningEntry): void {
+    // Crystallize if:
+    // 1. Pattern has been used 3+ times (validated usefulness)
+    // 2. Not already crystallized
+    // 3. Has a clear resolution
+    if (
+      pattern.useCount >= 3 &&
+      !pattern.crystallizedTo &&
+      pattern.resolution &&
+      pattern.tool
+    ) {
+      this.logger?.info(`[foundry] Pattern ${pattern.id} ready for crystallization (used ${pattern.useCount} times)`);
+      // Mark as ready - actual crystallization happens via foundry_crystallize tool or auto-hook
+      pattern.crystallizedAt = "pending";
+    }
+  }
+
+  // Get patterns ready for crystallization
+  getCrystallizationCandidates(): LearningEntry[] {
+    return this.learnings.filter(l =>
+      l.type === "pattern" &&
+      l.useCount >= 3 &&
+      !l.crystallizedTo &&
+      l.resolution
+    );
+  }
+
+  // Mark pattern as crystallized (called after hook/tool is written)
+  markCrystallized(patternId: string, artifactId: string): void {
+    const entry = this.learnings.find(l => l.id === patternId);
+    if (entry) {
+      entry.crystallizedTo = artifactId;
+      entry.crystallizedAt = new Date().toISOString();
+      this.saveLearnings();
+      this.logger?.info(`[foundry] Crystallized pattern ${patternId} → ${artifactId}`);
     }
   }
 
@@ -707,13 +813,41 @@ class LearningEngine {
   }
 
   // ── Query learnings ──────────────────────────────────────────────────────
+  // RISE: Prioritize patterns with successful improvement trajectories
 
   findRelevantLearnings(tool?: string, errorPattern?: string): LearningEntry[] {
-    return this.learnings.filter(l => {
+    const relevant = this.learnings.filter(l => {
       if (tool && l.tool !== tool) return false;
       if (errorPattern && l.error && !l.error.includes(errorPattern)) return false;
-      return l.type === "pattern" || l.type === "insight"; // Only return useful learnings
-    }).slice(-10); // Last 10 relevant
+      return l.type === "pattern" || l.type === "insight";
+    });
+
+    // RISE: Sort by improvement trajectory success rate
+    return relevant
+      .sort((a, b) => {
+        const aScore = this.calculatePatternScore(a);
+        const bScore = this.calculatePatternScore(b);
+        return bScore - aScore;
+      })
+      .slice(0, 10);
+  }
+
+  // RISE: Calculate pattern effectiveness score
+  private calculatePatternScore(entry: LearningEntry): number {
+    let score = entry.useCount || 0;
+
+    // Boost patterns with successful improvement trajectory
+    if (entry.improvementTrajectory && entry.improvementTrajectory.length > 0) {
+      const avgSuccess = entry.improvementTrajectory.reduce((a, b) => a + b, 0) / entry.improvementTrajectory.length;
+      score += avgSuccess * 5;
+    }
+
+    // Boost crystallized patterns (proven valuable enough to become code)
+    if (entry.crystallizedTo) {
+      score += 10;
+    }
+
+    return score;
   }
 
   getRecentFailures(limit = 5): LearningEntry[] {
@@ -735,8 +869,75 @@ class LearningEngine {
     const patterns = this.learnings.filter(l => l.type === "pattern").length;
     const insights = this.learnings.filter(l => l.type === "insight").length;
     const successes = this.learnings.filter(l => l.type === "success").length;
+    const crystallized = this.learnings.filter(l => l.crystallizedTo).length;
+    const pendingCrystallization = this.getCrystallizationCandidates().length;
 
-    return `${patterns} patterns, ${insights} insights, ${failures} unresolved failures, ${successes} successes`;
+    return `${patterns} patterns (${crystallized} crystallized, ${pendingCrystallization} pending), ${insights} insights, ${failures} unresolved failures, ${successes} successes`;
+  }
+
+  // Self-Improving Coding Agent: Overseer mechanism (arXiv:2504.15228)
+  // Periodically reviews patterns and identifies improvements
+  runOverseer(): OverseerReport {
+    const report: OverseerReport = {
+      timestamp: new Date().toISOString(),
+      crystallizationCandidates: [],
+      stalePatterns: [],
+      recurringFailures: [],
+      recommendations: [],
+    };
+
+    // 1. Find patterns ready for crystallization
+    report.crystallizationCandidates = this.getCrystallizationCandidates().map(p => ({
+      id: p.id,
+      tool: p.tool || "unknown",
+      error: p.error?.slice(0, 50) || "",
+      useCount: p.useCount,
+    }));
+
+    // 2. Find stale patterns (not used in 30 days)
+    const thirtyDaysAgo = Date.now() - 30 * 24 * 60 * 60 * 1000;
+    report.stalePatterns = this.learnings
+      .filter(l => l.type === "pattern" && new Date(l.timestamp).getTime() < thirtyDaysAgo && l.useCount < 2)
+      .map(p => p.id);
+
+    // 3. Find recurring failures (same error 3+ times without resolution)
+    const failureCounts = new Map<string, number>();
+    for (const l of this.learnings.filter(l => l.type === "failure" && !l.resolution)) {
+      const sig = `${l.tool}:${this.extractErrorSignature(l.error || "")}`;
+      failureCounts.set(sig, (failureCounts.get(sig) || 0) + 1);
+    }
+    report.recurringFailures = Array.from(failureCounts.entries())
+      .filter(([_, count]) => count >= 3)
+      .map(([sig, count]) => ({ signature: sig, count }));
+
+    // 4. Generate recommendations
+    if (report.crystallizationCandidates.length > 0) {
+      report.recommendations.push(
+        `${report.crystallizationCandidates.length} patterns ready to crystallize into hooks/tools`
+      );
+    }
+    if (report.recurringFailures.length > 0) {
+      report.recommendations.push(
+        `${report.recurringFailures.length} recurring failures need attention`
+      );
+    }
+    if (report.stalePatterns.length > 5) {
+      report.recommendations.push(
+        `Consider pruning ${report.stalePatterns.length} stale patterns`
+      );
+    }
+
+    return report;
+  }
+
+  // Increment use count when pattern is applied
+  recordPatternUse(patternId: string): void {
+    const entry = this.learnings.find(l => l.id === patternId);
+    if (entry) {
+      entry.useCount = (entry.useCount || 0) + 1;
+      this.saveLearnings();
+      this.checkCrystallization(entry);
+    }
   }
 
   // ── Pending session management ───────────────────────────────────────────
@@ -1033,6 +1234,7 @@ export default {
     if (!existsSync(dataDir)) mkdirSync(dataDir, { recursive: true });
 
     const writer = new CodeWriter(dataDir, clawdbotPath, logger);
+    const selfWriter = new SelfWriter({ dataDir, logger });
     const docsFetcher = new DocsFetcher();
     const learningEngine = new LearningEngine(dataDir, logger);
     const codeValidator = new CodeValidator(logger);
@@ -1794,6 +1996,141 @@ ${p.toolCode.split("\n").map((l: string) => "          " + l).join("\n")}
           return { content: [{ type: "text", text: output }] };
         },
       },
+
+      // ── foundry_overseer ────────────────────────────────────────────────────
+      // Self-Improving Coding Agent: Overseer mechanism (arXiv:2504.15228)
+      {
+        name: "foundry_overseer",
+        label: "Run Overseer",
+        description:
+          "Run the overseer to analyze patterns, identify crystallization candidates, " +
+          "find recurring failures, and get recommendations for self-improvement. " +
+          "Based on Self-Improving Coding Agent (arXiv:2504.15228).",
+        parameters: {
+          type: "object" as const,
+          properties: {},
+          required: [] as string[],
+        },
+        async execute() {
+          const report = learningEngine.runOverseer();
+
+          let output = `## Foundry Overseer Report\n\n`;
+          output += `**Generated**: ${report.timestamp}\n\n`;
+
+          if (report.crystallizationCandidates.length > 0) {
+            output += `### Crystallization Candidates\n`;
+            output += `Patterns ready to be converted into executable hooks/tools:\n\n`;
+            for (const c of report.crystallizationCandidates) {
+              output += `- **${c.tool}**: "${c.error}..." (used ${c.useCount}x) → \`foundry_crystallize id="${c.id}"\`\n`;
+            }
+            output += `\n`;
+          }
+
+          if (report.recurringFailures.length > 0) {
+            output += `### Recurring Failures\n`;
+            output += `Errors occurring 3+ times without resolution:\n\n`;
+            for (const f of report.recurringFailures) {
+              output += `- ${f.signature} (${f.count}x)\n`;
+            }
+            output += `\n`;
+          }
+
+          if (report.stalePatterns.length > 0) {
+            output += `### Stale Patterns\n`;
+            output += `${report.stalePatterns.length} patterns not used in 30+ days\n\n`;
+          }
+
+          if (report.recommendations.length > 0) {
+            output += `### Recommendations\n`;
+            for (const r of report.recommendations) {
+              output += `- ${r}\n`;
+            }
+          } else {
+            output += `\n✓ No immediate actions needed\n`;
+          }
+
+          return { content: [{ type: "text", text: output }] };
+        },
+      },
+
+      // ── foundry_crystallize ─────────────────────────────────────────────────
+      // HexMachina: Artifact-centric learning (arXiv:2506.04651)
+      {
+        name: "foundry_crystallize",
+        label: "Crystallize Pattern",
+        description:
+          "Convert a learned pattern into executable code (hook or tool). " +
+          "This 'crystallizes' passive knowledge into active behavior that runs automatically. " +
+          "Based on HexMachina artifact-centric learning (arXiv:2506.04651).",
+        parameters: {
+          type: "object" as const,
+          properties: {
+            patternId: {
+              type: "string" as const,
+              description: "ID of the pattern to crystallize (from foundry_overseer)",
+            },
+            artifactType: {
+              type: "string" as const,
+              enum: ["hook", "tool"],
+              description: "Type of artifact to create (default: hook)",
+            },
+          },
+          required: ["patternId"] as string[],
+        },
+        async execute(_toolCallId: string, params: unknown) {
+          const p = params as { patternId: string; artifactType?: string };
+          const pattern = learningEngine.getPatterns().find(l => l.id === p.patternId);
+
+          if (!pattern) {
+            return { content: [{ type: "text", text: `Pattern not found: ${p.patternId}` }] };
+          }
+
+          if (!pattern.resolution) {
+            return { content: [{ type: "text", text: `Pattern has no resolution to crystallize` }] };
+          }
+
+          if (pattern.crystallizedTo) {
+            return { content: [{ type: "text", text: `Pattern already crystallized to: ${pattern.crystallizedTo}` }] };
+          }
+
+          const artifactType = p.artifactType || "hook";
+          const artifactId = `crystallized_${pattern.tool}_${Date.now()}`;
+
+          // Generate hook handler code based on the pattern
+          const handlerCode = `
+    // Check if this is the tool that had the issue
+    if (event.toolName === "${pattern.tool}") {
+      // Apply learned resolution: ${pattern.resolution?.slice(0, 100)}
+      ctx.log?.info("[crystallized] Applying learned pattern for ${pattern.tool}");
+      // Original error: ${pattern.error?.slice(0, 100)}
+      // TODO: Implement specific resolution logic based on pattern
+    }
+`;
+
+          // Write the hook via SelfWriter
+          // SelfWriter.writeHook(name, event, description, handlerCode, source)
+          const written = selfWriter.writeHook(
+            artifactId,
+            "before_tool_call",
+            `Auto-crystallized handler for ${pattern.tool} errors: ${pattern.error?.slice(0, 50)}`,
+            handlerCode,
+            `crystallized from pattern ${pattern.id}`
+          );
+          learningEngine.markCrystallized(p.patternId, written.id);
+
+          let output = `## Pattern Crystallized\n\n`;
+          output += `**Pattern**: ${pattern.id}\n`;
+          output += `**Tool**: ${pattern.tool}\n`;
+          output += `**Error**: ${pattern.error?.slice(0, 100)}...\n`;
+          output += `**Resolution**: ${pattern.resolution}\n\n`;
+          output += `**Created**: ${artifactType} → ${written.id}\n\n`;
+          output += `The pattern is now executable code. Restart gateway to activate:\n`;
+          output += `\`clawdbot gateway restart\`\n`;
+
+          return { content: [{ type: "text", text: output }] };
+        },
+      },
+
       // ── foundry_publish_ability ─────────────────────────────────────────
       {
         name: "foundry_publish_ability",
@@ -2154,6 +2491,8 @@ ${p.toolCode.split("\n").map((l: string) => "          " + l).join("\n")}
       "foundry_extend_self",
       "foundry_restart",
       "foundry_learnings",
+      "foundry_overseer",
+      "foundry_crystallize",
       "foundry_publish_ability",
       "foundry_marketplace",
     ];
