@@ -19,8 +19,17 @@
  *   foundry_docs         — Read OpenClaw plugin/hooks documentation
  */
 
-import type { ClawdbotPluginApi, ClawdbotPluginToolContext } from "clawdbot/plugin-sdk";
-import { existsSync, mkdirSync, readFileSync, writeFileSync, readdirSync } from "node:fs";
+import type {
+  ClawdbotPluginApi,
+  ClawdbotPluginToolContext,
+} from "clawdbot/plugin-sdk";
+import {
+  existsSync,
+  mkdirSync,
+  readFileSync,
+  writeFileSync,
+  readdirSync,
+} from "node:fs";
 import { join } from "node:path";
 import { homedir } from "node:os";
 
@@ -47,10 +56,19 @@ const DOC_PAGES: Record<string, string[]> = {
   browser: ["/tools/browser", "/tools/browser-login"],
   agent: ["/concepts/agent", "/concepts/agent-loop", "/concepts/system-prompt"],
   gateway: ["/gateway/gateway", "/gateway/configuration", "/gateway/protocol"],
-  channels: ["/channels/index", "/channels/whatsapp", "/channels/telegram", "/channels/discord"],
+  channels: [
+    "/channels/index",
+    "/channels/whatsapp",
+    "/channels/telegram",
+    "/channels/discord",
+  ],
   memory: ["/concepts/memory", "/cli/memory"],
   models: ["/concepts/models", "/concepts/model-providers"],
-  automation: ["/automation/hooks", "/automation/cron-jobs", "/automation/webhook"],
+  automation: [
+    "/automation/hooks",
+    "/automation/cron-jobs",
+    "/automation/webhook",
+  ],
   nodes: ["/nodes/nodes", "/nodes/camera"],
   security: ["/gateway/security", "/gateway/sandboxing"],
 };
@@ -61,7 +79,8 @@ const DOC_PAGES: Record<string, string[]> = {
 const OPENCLAW_TOPICS = new Set(["skills", "plugin", "clawdhub"]);
 
 class DocsFetcher {
-  private cache: Map<string, { content: string; fetchedAt: number }> = new Map();
+  private cache: Map<string, { content: string; fetchedAt: number }> =
+    new Map();
   private cacheTtl = 1000 * 60 * 30; // 30 minutes
   private openclawIndex: string | null = null;
 
@@ -76,7 +95,10 @@ class DocsFetcher {
       const res = await fetch(OPENCLAW_LLMS_TXT);
       if (res.ok) {
         this.openclawIndex = await res.text();
-        this.cache.set(OPENCLAW_LLMS_TXT, { content: this.openclawIndex, fetchedAt: Date.now() });
+        this.cache.set(OPENCLAW_LLMS_TXT, {
+          content: this.openclawIndex,
+          fetchedAt: Date.now(),
+        });
         return this.openclawIndex;
       }
     } catch (err) {
@@ -89,13 +111,20 @@ class DocsFetcher {
    * Get the base URL for a topic - OpenClaw for skills/plugins, molt.bot for others
    */
   private getBaseUrl(topic: string): string {
-    return OPENCLAW_TOPICS.has(topic.toLowerCase()) ? OPENCLAW_DOCS_BASE : DOCS_BASE;
+    return OPENCLAW_TOPICS.has(topic.toLowerCase())
+      ? OPENCLAW_DOCS_BASE
+      : DOCS_BASE;
   }
 
   async fetchPage(path: string, preferOpenClaw = false): Promise<string> {
     // Determine base URL
     let baseUrl = DOCS_BASE;
-    if (preferOpenClaw || path.includes("/skills") || path.includes("/plugin") || path.includes("/clawdhub")) {
+    if (
+      preferOpenClaw ||
+      path.includes("/skills") ||
+      path.includes("/plugin") ||
+      path.includes("/clawdhub")
+    ) {
       baseUrl = OPENCLAW_DOCS_BASE;
     }
 
@@ -139,8 +168,9 @@ class DocsFetcher {
     const pages = DOC_PAGES[topic.toLowerCase()];
     if (!pages) {
       // Try to find matching topic
-      const matchingTopic = Object.keys(DOC_PAGES).find(k =>
-        k.includes(topic.toLowerCase()) || topic.toLowerCase().includes(k)
+      const matchingTopic = Object.keys(DOC_PAGES).find(
+        (k) =>
+          k.includes(topic.toLowerCase()) || topic.toLowerCase().includes(k),
       );
       if (matchingTopic) {
         return this.fetchForTopic(matchingTopic);
@@ -155,7 +185,8 @@ class DocsFetcher {
 
     const preferOpenClaw = OPENCLAW_TOPICS.has(topic.toLowerCase());
     const results: string[] = [];
-    for (const page of pages.slice(0, 2)) { // Limit to 2 pages to avoid too much content
+    for (const page of pages.slice(0, 2)) {
+      // Limit to 2 pages to avoid too much content
       const content = await this.fetchPage(page, preferOpenClaw);
       const baseUrl = preferOpenClaw ? OPENCLAW_DOCS_BASE : DOCS_BASE;
       results.push(`## ${baseUrl}${page}\n\n${content.slice(0, 4000)}`);
@@ -169,21 +200,41 @@ class DocsFetcher {
     const relevantTopics: string[] = [];
 
     for (const [topic, pages] of Object.entries(DOC_PAGES)) {
-      if (queryLower.includes(topic) || topic.includes(queryLower.split(" ")[0])) {
+      if (
+        queryLower.includes(topic) ||
+        topic.includes(queryLower.split(" ")[0])
+      ) {
         relevantTopics.push(topic);
       }
     }
 
     // Check for specific keywords
-    if (queryLower.includes("hook") || queryLower.includes("event")) relevantTopics.push("hooks");
-    if (queryLower.includes("tool") || queryLower.includes("plugin")) relevantTopics.push("plugin", "tools");
-    if (queryLower.includes("browser") || queryLower.includes("playwright")) relevantTopics.push("browser");
-    if (queryLower.includes("skill") || queryLower.includes("api") || queryLower.includes("agentskill")) relevantTopics.push("skills");
-    if (queryLower.includes("agent") || queryLower.includes("prompt")) relevantTopics.push("agent");
-    if (queryLower.includes("channel") || queryLower.includes("message")) relevantTopics.push("channels");
-    if (queryLower.includes("cron") || queryLower.includes("schedule")) relevantTopics.push("automation");
-    if (queryLower.includes("clawdhub") || queryLower.includes("registry")) relevantTopics.push("clawdhub");
-    if (queryLower.includes("openclaw") || queryLower.includes("frontmatter") || queryLower.includes("metadata")) relevantTopics.push("skills");
+    if (queryLower.includes("hook") || queryLower.includes("event"))
+      relevantTopics.push("hooks");
+    if (queryLower.includes("tool") || queryLower.includes("plugin"))
+      relevantTopics.push("plugin", "tools");
+    if (queryLower.includes("browser") || queryLower.includes("playwright"))
+      relevantTopics.push("browser");
+    if (
+      queryLower.includes("skill") ||
+      queryLower.includes("api") ||
+      queryLower.includes("agentskill")
+    )
+      relevantTopics.push("skills");
+    if (queryLower.includes("agent") || queryLower.includes("prompt"))
+      relevantTopics.push("agent");
+    if (queryLower.includes("channel") || queryLower.includes("message"))
+      relevantTopics.push("channels");
+    if (queryLower.includes("cron") || queryLower.includes("schedule"))
+      relevantTopics.push("automation");
+    if (queryLower.includes("clawdhub") || queryLower.includes("registry"))
+      relevantTopics.push("clawdhub");
+    if (
+      queryLower.includes("openclaw") ||
+      queryLower.includes("frontmatter") ||
+      queryLower.includes("metadata")
+    )
+      relevantTopics.push("skills");
 
     const uniqueTopics = [...new Set(relevantTopics)].slice(0, 3);
 
@@ -197,8 +248,10 @@ class DocsFetcher {
     const results: string[] = [`# Documentation for: ${query}\n`];
 
     // Include OpenClaw index summary if skills-related
-    if (uniqueTopics.some(t => OPENCLAW_TOPICS.has(t))) {
-      results.push(`## OpenClaw Documentation Index\n\n${openclawIndex.slice(0, 1500)}\n`);
+    if (uniqueTopics.some((t) => OPENCLAW_TOPICS.has(t))) {
+      results.push(
+        `## OpenClaw Documentation Index\n\n${openclawIndex.slice(0, 1500)}\n`,
+      );
     }
 
     for (const topic of uniqueTopics) {
@@ -445,7 +498,11 @@ interface OverseerReport {
   timestamp: string;
   patternsAnalyzed: number;
   crystallizationCandidates: LearningEntry[];
-  recurringFailures: { signature: string; count: number; entries: LearningEntry[] }[];
+  recurringFailures: {
+    signature: string;
+    count: number;
+    entries: LearningEntry[];
+  }[];
   evolutionCandidates: ToolMetrics[]; // ADAS: Tools needing evolution
   actionsExecuted: string[];
 }
@@ -509,30 +566,30 @@ interface PendingSession {
 
 interface WorkflowEntry {
   id: string;
-  goal: string;                    // User's intent extracted from first message
-  toolSequence: string[];          // Ordered list of tools called
+  goal: string; // User's intent extracted from first message
+  toolSequence: string[]; // Ordered list of tools called
   startedAt: number;
   completedAt: number;
   outcome: "success" | "failure" | "partial";
-  context: string;                 // Summary of what was achieved
+  context: string; // Summary of what was achieved
 }
 
 interface WorkflowPattern {
   id: string;
-  signature: string;               // Normalized: "tool1→tool2→tool3"
-  goalKeywords: string[];          // Common goal words across occurrences
-  occurrences: number;             // How many times this pattern appeared
-  successRate: number;             // % of successful outcomes
-  avgDuration: number;             // Average time to complete (ms)
-  crystallizedTo?: string;         // Tool ID if converted to a tool
+  signature: string; // Normalized: "tool1→tool2→tool3"
+  goalKeywords: string[]; // Common goal words across occurrences
+  occurrences: number; // How many times this pattern appeared
+  successRate: number; // % of successful outcomes
+  avgDuration: number; // Average time to complete (ms)
+  crystallizedTo?: string; // Tool ID if converted to a tool
   lastOccurrence: number;
 }
 
 interface WorkflowSuggestion {
   patternId: string;
   signature: string;
-  description: string;             // "You often do X when [goal keywords]"
-  confidence: number;              // 0-1 based on occurrences and success rate
+  description: string; // "You often do X when [goal keywords]"
+  confidence: number; // 0-1 based on occurrences and success rate
 }
 
 interface ExtensionDef {
@@ -640,7 +697,14 @@ interface OpenClawHookDef {
   name: string;
   description: string;
   // Events to trigger on
-  events: ("command:new" | "command:reset" | "command:stop" | "agent:bootstrap" | "gateway:startup" | "tool_result_persist")[];
+  events: (
+    | "command:new"
+    | "command:reset"
+    | "command:stop"
+    | "agent:bootstrap"
+    | "gateway:startup"
+    | "tool_result_persist"
+  )[];
   // Hook code (handler function body)
   code: string;
   // OpenClaw metadata
@@ -664,8 +728,14 @@ class CodeWriter {
   private extensionsDir: string;
   private skillsDir: string;
   private manifestPath: string;
-  private manifest: { extensions: ExtensionDef[]; skills: SkillDef[] } = { extensions: [], skills: [] };
-  private openclawDocs: { plugin: string; hooks: string } = { plugin: "", hooks: "" };
+  private manifest: { extensions: ExtensionDef[]; skills: SkillDef[] } = {
+    extensions: [],
+    skills: [],
+  };
+  private openclawDocs: { plugin: string; hooks: string } = {
+    plugin: "",
+    hooks: "",
+  };
 
   constructor(
     private dataDir: string,
@@ -676,8 +746,10 @@ class CodeWriter {
     this.skillsDir = join(homedir(), ".openclaw", "skills");
     this.manifestPath = join(dataDir, "manifest.json");
 
-    if (!existsSync(this.extensionsDir)) mkdirSync(this.extensionsDir, { recursive: true });
-    if (!existsSync(this.skillsDir)) mkdirSync(this.skillsDir, { recursive: true });
+    if (!existsSync(this.extensionsDir))
+      mkdirSync(this.extensionsDir, { recursive: true });
+    if (!existsSync(this.skillsDir))
+      mkdirSync(this.skillsDir, { recursive: true });
 
     this.loadManifest();
     this.loadOpenClawDocs();
@@ -733,29 +805,44 @@ class CodeWriter {
   ): Promise<{ path: string; validation: ValidationResult }> {
     const full: ExtensionDef = { ...def, createdAt: new Date().toISOString() };
 
-    const toolsCode = def.tools.map(t => {
-      const props = Object.entries(t.properties)
-        .map(([k, v]) => `          ${k}: { type: "${v.type}", description: "${v.description.replace(/"/g, '\\"')}" },`)
-        .join("\n");
-      const req = t.required.map(r => `"${r}"`).join(", ");
+    const toolsCode = def.tools
+      .map((t) => {
+        const props = Object.entries(t.properties)
+          .map(
+            ([k, v]) =>
+              `          ${k}: { type: "${v.type}", description: "${v.description.replace(/"/g, '\\"')}" },`,
+          )
+          .join("\n");
+        const req = t.required.map((r) => `"${r}"`).join(", ");
 
-      return TOOL_TEMPLATE
-        .replace(/\{\{NAME\}\}/g, t.name)
-        .replace(/\{\{LABEL\}\}/g, t.label || t.name)
-        .replace(/\{\{DESCRIPTION\}\}/g, t.description.replace(/"/g, '\\"'))
-        .replace(/\{\{PROPERTIES\}\}/g, props)
-        .replace(/\{\{REQUIRED\}\}/g, req)
-        .replace(/\{\{CODE\}\}/g, t.code.split("\n").map(l => "        " + l).join("\n"));
-    }).join("\n");
+        return TOOL_TEMPLATE.replace(/\{\{NAME\}\}/g, t.name)
+          .replace(/\{\{LABEL\}\}/g, t.label || t.name)
+          .replace(/\{\{DESCRIPTION\}\}/g, t.description.replace(/"/g, '\\"'))
+          .replace(/\{\{PROPERTIES\}\}/g, props)
+          .replace(/\{\{REQUIRED\}\}/g, req)
+          .replace(
+            /\{\{CODE\}\}/g,
+            t.code
+              .split("\n")
+              .map((l) => "        " + l)
+              .join("\n"),
+          );
+      })
+      .join("\n");
 
-    const hooksCode = def.hooks.map(h => {
-      return HOOK_TEMPLATE
-        .replace(/\{\{EVENT\}\}/g, h.event)
-        .replace(/\{\{CODE\}\}/g, h.code.split("\n").map(l => "      " + l).join("\n"));
-    }).join("\n");
+    const hooksCode = def.hooks
+      .map((h) => {
+        return HOOK_TEMPLATE.replace(/\{\{EVENT\}\}/g, h.event).replace(
+          /\{\{CODE\}\}/g,
+          h.code
+            .split("\n")
+            .map((l) => "      " + l)
+            .join("\n"),
+        );
+      })
+      .join("\n");
 
-    const extensionCode = EXTENSION_TEMPLATE
-      .replace(/\{\{ID\}\}/g, def.id)
+    const extensionCode = EXTENSION_TEMPLATE.replace(/\{\{ID\}\}/g, def.id)
       .replace(/\{\{NAME\}\}/g, def.name)
       .replace(/\{\{DESCRIPTION\}\}/g, def.description)
       .replace(/\{\{DATE\}\}/g, full.createdAt)
@@ -763,26 +850,42 @@ class CodeWriter {
       .replace(/\{\{HOOKS\}\}/g, hooksCode);
 
     // Validate before writing
-    let validation: ValidationResult = { valid: true, errors: [], warnings: [], securityFlags: [] };
+    let validation: ValidationResult = {
+      valid: true,
+      errors: [],
+      warnings: [],
+      securityFlags: [],
+    };
     if (validator) {
       validation = await validator.validate(extensionCode, "extension");
 
       // Block if validation failed
       if (!validation.valid) {
-        this.logger?.info(`[foundry] Extension ${def.id} BLOCKED: ${validation.errors.join(", ")}`);
-        throw new Error(`Code validation failed: ${validation.errors.join(", ")}`);
+        this.logger?.info(
+          `[foundry] Extension ${def.id} BLOCKED: ${validation.errors.join(", ")}`,
+        );
+        throw new Error(
+          `Code validation failed: ${validation.errors.join(", ")}`,
+        );
       }
 
       // Log warnings
       if (validation.warnings.length > 0) {
-        this.logger?.info(`[foundry] Extension ${def.id} warnings: ${validation.warnings.join(", ")}`);
+        this.logger?.info(
+          `[foundry] Extension ${def.id} warnings: ${validation.warnings.join(", ")}`,
+        );
       }
 
       // Run in sandbox to catch runtime errors BEFORE writing
       const sandboxDir = join(this.dataDir, "sandbox");
-      const sandboxResult = await validator.testInSandbox(extensionCode, sandboxDir);
+      const sandboxResult = await validator.testInSandbox(
+        extensionCode,
+        sandboxDir,
+      );
       if (!sandboxResult.success) {
-        this.logger?.info(`[foundry] Extension ${def.id} SANDBOX FAILED: ${sandboxResult.error}`);
+        this.logger?.info(
+          `[foundry] Extension ${def.id} SANDBOX FAILED: ${sandboxResult.error}`,
+        );
         throw new Error(`Sandbox test failed: ${sandboxResult.error}`);
       }
       this.logger?.info(`[foundry] Extension ${def.id} passed sandbox test`);
@@ -794,23 +897,24 @@ class CodeWriter {
     writeFileSync(join(extDir, "index.ts"), extensionCode);
     writeFileSync(
       join(extDir, "openclaw.plugin.json"),
-      PLUGIN_JSON_TEMPLATE
-        .replace(/\{\{ID\}\}/g, def.id)
+      PLUGIN_JSON_TEMPLATE.replace(/\{\{ID\}\}/g, def.id)
         .replace(/\{\{NAME\}\}/g, def.name)
         .replace(/\{\{DESCRIPTION\}\}/g, def.description),
     );
 
-    const idx = this.manifest.extensions.findIndex(e => e.id === def.id);
+    const idx = this.manifest.extensions.findIndex((e) => e.id === def.id);
     if (idx >= 0) this.manifest.extensions[idx] = full;
     else this.manifest.extensions.push(full);
     this.saveManifest();
 
-    this.logger?.info(`[foundry] Wrote extension: ${def.id} (${validation.warnings.length} warnings, ${validation.securityFlags.length} flags)`);
+    this.logger?.info(
+      `[foundry] Wrote extension: ${def.id} (${validation.warnings.length} warnings, ${validation.securityFlags.length} flags)`,
+    );
     return { path: extDir, validation };
   }
 
   addTool(extensionId: string, tool: ToolDef): boolean {
-    const ext = this.manifest.extensions.find(e => e.id === extensionId);
+    const ext = this.manifest.extensions.find((e) => e.id === extensionId);
     if (!ext) return false;
     ext.tools.push(tool);
     this.writeExtension(ext);
@@ -818,7 +922,7 @@ class CodeWriter {
   }
 
   addHook(extensionId: string, hook: HookDef): boolean {
-    const ext = this.manifest.extensions.find(e => e.id === extensionId);
+    const ext = this.manifest.extensions.find((e) => e.id === extensionId);
     if (!ext) return false;
     ext.hooks.push(hook);
     this.writeExtension(ext);
@@ -829,7 +933,10 @@ class CodeWriter {
 
   writeSkill(def: Omit<SkillDef, "createdAt">): string {
     const full: SkillDef = { ...def, createdAt: new Date().toISOString() };
-    const skillDir = join(this.skillsDir, def.name.toLowerCase().replace(/\s+/g, "-"));
+    const skillDir = join(
+      this.skillsDir,
+      def.name.toLowerCase().replace(/\s+/g, "-"),
+    );
 
     if (!existsSync(skillDir)) mkdirSync(skillDir, { recursive: true });
 
@@ -861,9 +968,8 @@ class CodeWriter {
       frontmatterLines.push(`metadata: ${JSON.stringify(def.metadata)}`);
     }
 
-    const frontmatter = frontmatterLines.length > 0
-      ? frontmatterLines.join("\n") + "\n"
-      : "";
+    const frontmatter =
+      frontmatterLines.length > 0 ? frontmatterLines.join("\n") + "\n" : "";
 
     // Build skill content
     let content = def.content || "";
@@ -871,7 +977,7 @@ class CodeWriter {
     // If legacy API-based skill, generate content from endpoints
     if (def.baseUrl && def.endpoints && def.endpoints.length > 0) {
       const endpointsDoc = def.endpoints
-        .map(e => `- \`${e.method} ${e.path}\` — ${e.description}`)
+        .map((e) => `- \`${e.method} ${e.path}\` — ${e.description}`)
         .join("\n");
 
       content = `## Endpoints
@@ -892,40 +998,43 @@ const client = new ${toPascalCase(def.name)}Client();
 ${def.authHeaders ? "Auth headers stored in auth.json" : "No auth required"}`;
 
       // Generate api.ts for API-based skills
-      const methods = def.endpoints.map(e => {
-        const methodName = toMethodName(e.method, e.path);
-        const pathParams = (e.path.match(/\{(\w+)\}/g) || []).map(p => p.slice(1, -1));
+      const methods = def.endpoints
+        .map((e) => {
+          const methodName = toMethodName(e.method, e.path);
+          const pathParams = (e.path.match(/\{(\w+)\}/g) || []).map((p) =>
+            p.slice(1, -1),
+          );
 
-        let methodCode = `  async ${methodName}(`;
-        if (pathParams.length > 0) {
-          methodCode += pathParams.map(p => `${p}: string`).join(", ");
-        }
-        if (e.method !== "GET" && e.method !== "DELETE") {
-          methodCode += pathParams.length > 0 ? ", body?: any" : "body?: any";
-        }
-        methodCode += `) {\n`;
+          let methodCode = `  async ${methodName}(`;
+          if (pathParams.length > 0) {
+            methodCode += pathParams.map((p) => `${p}: string`).join(", ");
+          }
+          if (e.method !== "GET" && e.method !== "DELETE") {
+            methodCode += pathParams.length > 0 ? ", body?: any" : "body?: any";
+          }
+          methodCode += `) {\n`;
 
-        let urlCode = `\`\${BASE_URL}${e.path}\``;
-        for (const p of pathParams) {
-          urlCode = urlCode.replace(`{${p}}`, `\${${p}}`);
-        }
+          let urlCode = `\`\${BASE_URL}${e.path}\``;
+          for (const p of pathParams) {
+            urlCode = urlCode.replace(`{${p}}`, `\${${p}}`);
+          }
 
-        methodCode += `    const url = ${urlCode};\n`;
-        methodCode += `    const res = await fetch(url, {\n`;
-        methodCode += `      method: "${e.method}",\n`;
-        methodCode += `      headers: this.headers,\n`;
-        if (e.method !== "GET" && e.method !== "DELETE") {
-          methodCode += `      body: body ? JSON.stringify(body) : undefined,\n`;
-        }
-        methodCode += `    });\n`;
-        methodCode += `    return res.json();\n`;
-        methodCode += `  }\n`;
+          methodCode += `    const url = ${urlCode};\n`;
+          methodCode += `    const res = await fetch(url, {\n`;
+          methodCode += `      method: "${e.method}",\n`;
+          methodCode += `      headers: this.headers,\n`;
+          if (e.method !== "GET" && e.method !== "DELETE") {
+            methodCode += `      body: body ? JSON.stringify(body) : undefined,\n`;
+          }
+          methodCode += `    });\n`;
+          methodCode += `    return res.json();\n`;
+          methodCode += `  }\n`;
 
-        return methodCode;
-      }).join("\n");
+          return methodCode;
+        })
+        .join("\n");
 
-      const apiTs = API_CLIENT_TEMPLATE
-        .replace(/\{\{NAME\}\}/g, def.name)
+      const apiTs = API_CLIENT_TEMPLATE.replace(/\{\{NAME\}\}/g, def.name)
         .replace(/\{\{BASE_URL\}\}/g, def.baseUrl)
         .replace(/\{\{CLIENT_NAME\}\}/g, toPascalCase(def.name) + "Client")
         .replace(/\{\{METHODS\}\}/g, methods);
@@ -934,20 +1043,22 @@ ${def.authHeaders ? "Auth headers stored in auth.json" : "No auth required"}`;
 
       // Save auth if provided
       if (def.authHeaders) {
-        writeFileSync(join(skillDir, "auth.json"), JSON.stringify({ headers: def.authHeaders }, null, 2));
+        writeFileSync(
+          join(skillDir, "auth.json"),
+          JSON.stringify({ headers: def.authHeaders }, null, 2),
+        );
       }
     }
 
     // Generate SKILL.md with proper OpenClaw/AgentSkills format
-    const skillMd = SKILL_TEMPLATE
-      .replace(/\{\{NAME\}\}/g, def.name)
+    const skillMd = SKILL_TEMPLATE.replace(/\{\{NAME\}\}/g, def.name)
       .replace(/\{\{DESCRIPTION\}\}/g, def.description)
       .replace(/\{\{FRONTMATTER\}\}/g, frontmatter)
       .replace(/\{\{CONTENT\}\}/g, content);
 
     writeFileSync(join(skillDir, "SKILL.md"), skillMd);
 
-    const idx = this.manifest.skills.findIndex(s => s.name === def.name);
+    const idx = this.manifest.skills.findIndex((s) => s.name === def.name);
     if (idx >= 0) this.manifest.skills[idx] = full;
     else this.manifest.skills.push(full);
     this.saveManifest();
@@ -959,7 +1070,10 @@ ${def.authHeaders ? "Auth headers stored in auth.json" : "No auth required"}`;
   // ── Browser Skill Writing ─────────────────────────────────────────────────
 
   writeBrowserSkill(def: BrowserSkillDef): string {
-    const skillDir = join(this.skillsDir, def.name.toLowerCase().replace(/\s+/g, "-"));
+    const skillDir = join(
+      this.skillsDir,
+      def.name.toLowerCase().replace(/\s+/g, "-"),
+    );
     if (!existsSync(skillDir)) mkdirSync(skillDir, { recursive: true });
 
     // Build frontmatter
@@ -969,7 +1083,8 @@ ${def.authHeaders ? "Auth headers stored in auth.json" : "No auth required"}`;
     const metadata = def.metadata || {};
     if (!metadata.openclaw) metadata.openclaw = {};
     if (!metadata.openclaw.requires) metadata.openclaw.requires = {};
-    if (!metadata.openclaw.requires.config) metadata.openclaw.requires.config = [];
+    if (!metadata.openclaw.requires.config)
+      metadata.openclaw.requires.config = [];
     if (!metadata.openclaw.requires.config.includes("browser.enabled")) {
       metadata.openclaw.requires.config.push("browser.enabled");
     }
@@ -1010,9 +1125,11 @@ ${def.authHeaders ? "Auth headers stored in auth.json" : "No auth required"}`;
     const fullContent = `${actionsContent}${def.content || ""}`.trim();
 
     // Generate SKILL.md
-    const skillMd = BROWSER_SKILL_TEMPLATE
-      .replace(/\{\{NAME\}\}/g, def.name)
-      .replace(/\{\{DISPLAY_NAME\}\}/g, toPascalCase(def.name.replace(/-/g, " ")))
+    const skillMd = BROWSER_SKILL_TEMPLATE.replace(/\{\{NAME\}\}/g, def.name)
+      .replace(
+        /\{\{DISPLAY_NAME\}\}/g,
+        toPascalCase(def.name.replace(/-/g, " ")),
+      )
       .replace(/\{\{DESCRIPTION\}\}/g, def.description)
       .replace(/\{\{FRONTMATTER\}\}/g, frontmatter)
       .replace(/\{\{CONTENT\}\}/g, fullContent)
@@ -1040,24 +1157,32 @@ ${def.authHeaders ? "Auth headers stored in auth.json" : "No auth required"}`;
     const eventsStr = def.events.join(", ");
 
     // Generate HOOK.md
-    const hookMd = HOOK_MD_TEMPLATE
-      .replace(/\{\{NAME\}\}/g, def.name)
-      .replace(/\{\{DISPLAY_NAME\}\}/g, toPascalCase(def.name.replace(/-/g, " ")))
+    const hookMd = HOOK_MD_TEMPLATE.replace(/\{\{NAME\}\}/g, def.name)
+      .replace(
+        /\{\{DISPLAY_NAME\}\}/g,
+        toPascalCase(def.name.replace(/-/g, " ")),
+      )
       .replace(/\{\{DESCRIPTION\}\}/g, def.description)
       .replace(/\{\{METADATA\}\}/g, metadataJson)
       .replace(/\{\{EVENTS\}\}/g, eventsStr)
-      .replace(/\{\{CONTENT\}\}/g, def.code ? "Custom handler logic implemented below." : "No custom behavior defined.");
+      .replace(
+        /\{\{CONTENT\}\}/g,
+        def.code
+          ? "Custom handler logic implemented below."
+          : "No custom behavior defined.",
+      );
 
     writeFileSync(join(hookDir, "HOOK.md"), hookMd);
 
     // Generate handler.ts
-    const handlerCode = def.code || `const handler: HookHandler = async (event: HookEvent) => {
+    const handlerCode =
+      def.code ||
+      `const handler: HookHandler = async (event: HookEvent) => {
   // Event type: ${eventsStr}
   console.log("[${def.name}] Hook triggered:", event.type, event.action);
 };`;
 
-    const handlerTs = HOOK_HANDLER_TEMPLATE
-      .replace(/\{\{NAME\}\}/g, def.name)
+    const handlerTs = HOOK_HANDLER_TEMPLATE.replace(/\{\{NAME\}\}/g, def.name)
       .replace(/\{\{EVENTS\}\}/g, eventsStr)
       .replace(/\{\{CODE\}\}/g, handlerCode);
 
@@ -1078,7 +1203,7 @@ ${def.authHeaders ? "Auth headers stored in auth.json" : "No auth required"}`;
   }
 
   getExtension(id: string): ExtensionDef | undefined {
-    return this.manifest.extensions.find(e => e.id === id);
+    return this.manifest.extensions.find((e) => e.id === id);
   }
 }
 
@@ -1104,11 +1229,18 @@ class LearningEngine {
   // Workflow learning
   private workflows: WorkflowEntry[] = [];
   private workflowPatterns: Map<string, WorkflowPattern> = new Map();
-  private currentWorkflow: { goal: string; tools: string[]; startedAt: number } | null = null;
+  private currentWorkflow: {
+    goal: string;
+    tools: string[];
+    startedAt: number;
+  } | null = null;
 
   constructor(
     private dataDir: string,
-    private logger?: { info: (msg: string) => void; warn?: (msg: string) => void },
+    private logger?: {
+      info: (msg: string) => void;
+      warn?: (msg: string) => void;
+    },
   ) {
     this.learningsPath = join(dataDir, "learnings.json");
     this.pendingSessionPath = join(dataDir, "pending-session.json");
@@ -1143,14 +1275,26 @@ class LearningEngine {
   }
 
   // ADAS: Record tool execution for fitness tracking
-  recordToolExecution(toolName: string, success: boolean, latencyMs: number): void {
+  recordToolExecution(
+    toolName: string,
+    success: boolean,
+    latencyMs: number,
+  ): void {
     let metrics = this.toolMetrics.get(toolName);
     if (!metrics) {
-      metrics = { toolName, successCount: 0, failureCount: 0, totalLatencyMs: 0, fitness: 0.5 };
+      metrics = {
+        toolName,
+        successCount: 0,
+        failureCount: 0,
+        totalLatencyMs: 0,
+        fitness: 0.5,
+      };
     }
-    if (success) metrics.successCount++; else metrics.failureCount++;
+    if (success) metrics.successCount++;
+    else metrics.failureCount++;
     metrics.totalLatencyMs += latencyMs;
-    metrics.fitness = metrics.successCount / (metrics.successCount + metrics.failureCount);
+    metrics.fitness =
+      metrics.successCount / (metrics.successCount + metrics.failureCount);
     this.toolMetrics.set(toolName, metrics);
     this.saveMetrics();
   }
@@ -1182,8 +1326,12 @@ class LearningEngine {
   private loadPendingSession(): void {
     if (existsSync(this.pendingSessionPath)) {
       try {
-        this.pendingSession = JSON.parse(readFileSync(this.pendingSessionPath, "utf-8"));
-        this.logger?.info(`[foundry] Found pending session from: ${this.pendingSession?.reason}`);
+        this.pendingSession = JSON.parse(
+          readFileSync(this.pendingSessionPath, "utf-8"),
+        );
+        this.logger?.info(
+          `[foundry] Found pending session from: ${this.pendingSession?.reason}`,
+        );
       } catch {
         this.pendingSession = null;
       }
@@ -1204,29 +1352,41 @@ class LearningEngine {
 
   findSimilarPattern(tool: string, error: string): LearningEntry | undefined {
     const signature = this.extractErrorSignature(error);
-    return this.learnings.find(l =>
-      l.type === "pattern" &&
-      l.tool === tool &&
-      l.error &&
-      this.extractErrorSignature(l.error) === signature
+    return this.learnings.find(
+      (l) =>
+        l.type === "pattern" &&
+        l.tool === tool &&
+        l.error &&
+        this.extractErrorSignature(l.error) === signature,
     );
   }
 
-  private findSimilarFailure(tool: string, error: string): LearningEntry | undefined {
+  private findSimilarFailure(
+    tool: string,
+    error: string,
+  ): LearningEntry | undefined {
     const signature = this.extractErrorSignature(error);
-    return this.learnings.find(l =>
-      l.type === "failure" &&
-      l.tool === tool &&
-      l.error &&
-      this.extractErrorSignature(l.error) === signature
+    return this.learnings.find(
+      (l) =>
+        l.type === "failure" &&
+        l.tool === tool &&
+        l.error &&
+        this.extractErrorSignature(l.error) === signature,
     );
   }
 
-  recordFailure(tool: string, error: string, context?: string, executionFeedback?: string): string {
+  recordFailure(
+    tool: string,
+    error: string,
+    context?: string,
+    executionFeedback?: string,
+  ): string {
     // RISE: Check for similar past failures to track attempt progression
     const similar = this.findSimilarFailure(tool, error);
     const attemptCount = similar ? (similar.attemptCount || 0) + 1 : 1;
-    const trajectory = similar ? [...(similar.improvementTrajectory || []), 0] : [0];
+    const trajectory = similar
+      ? [...(similar.improvementTrajectory || []), 0]
+      : [0];
 
     const id = `fail_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
     const entry: LearningEntry = {
@@ -1245,16 +1405,20 @@ class LearningEngine {
     this.saveLearnings();
 
     if (attemptCount > 1) {
-      this.logger?.info(`[foundry] RISE: Attempt #${attemptCount} for ${tool} - ${error.slice(0, 40)}...`);
+      this.logger?.info(
+        `[foundry] RISE: Attempt #${attemptCount} for ${tool} - ${error.slice(0, 40)}...`,
+      );
     } else {
-      this.logger?.info(`[foundry] Recorded failure: ${tool} - ${error.slice(0, 50)}...`);
+      this.logger?.info(
+        `[foundry] Recorded failure: ${tool} - ${error.slice(0, 50)}...`,
+      );
     }
     return id;
   }
 
   // SelfEvolve: Add interpreter feedback to existing failure
   addExecutionFeedback(failureId: string, feedback: string): void {
-    const entry = this.learnings.find(l => l.id === failureId);
+    const entry = this.learnings.find((l) => l.id === failureId);
     if (entry) {
       entry.executionFeedback = entry.executionFeedback || [];
       entry.executionFeedback.push(feedback);
@@ -1263,17 +1427,22 @@ class LearningEngine {
   }
 
   recordResolution(failureId: string, resolution: string): void {
-    const entry = this.learnings.find(l => l.id === failureId);
+    const entry = this.learnings.find((l) => l.id === failureId);
     if (entry) {
       entry.resolution = resolution;
       entry.type = "pattern";
       // RISE: Mark success in trajectory
-      if (entry.improvementTrajectory && entry.improvementTrajectory.length > 0) {
+      if (
+        entry.improvementTrajectory &&
+        entry.improvementTrajectory.length > 0
+      ) {
         const lastIdx = entry.improvementTrajectory.length - 1;
         entry.improvementTrajectory[lastIdx] = 1.0;
       }
       this.saveLearnings();
-      this.logger?.info(`[foundry] Pattern created (attempt #${entry.attemptCount || 1}): ${entry.tool}`);
+      this.logger?.info(
+        `[foundry] Pattern created (attempt #${entry.attemptCount || 1}): ${entry.tool}`,
+      );
     }
   }
 
@@ -1288,16 +1457,18 @@ class LearningEngine {
   }
 
   getCrystallizationCandidates(): LearningEntry[] {
-    return this.learnings.filter(l => this.shouldCrystallize(l));
+    return this.learnings.filter((l) => this.shouldCrystallize(l));
   }
 
   markCrystallized(patternId: string, artifactId: string): void {
-    const entry = this.learnings.find(l => l.id === patternId);
+    const entry = this.learnings.find((l) => l.id === patternId);
     if (entry) {
       entry.crystallizedTo = artifactId;
       entry.crystallizedAt = new Date().toISOString();
       this.saveLearnings();
-      this.logger?.info(`[foundry] HexMachina: Crystallized ${patternId} → ${artifactId}`);
+      this.logger?.info(
+        `[foundry] HexMachina: Crystallized ${patternId} → ${artifactId}`,
+      );
     }
   }
 
@@ -1306,7 +1477,8 @@ class LearningEngine {
     let score = entry.useCount || 0;
     const trajectory = entry.improvementTrajectory || [];
     if (trajectory.length > 0) {
-      const avgSuccess = trajectory.reduce((a, b) => a + b, 0) / trajectory.length;
+      const avgSuccess =
+        trajectory.reduce((a, b) => a + b, 0) / trajectory.length;
       score += avgSuccess * 5;
     }
     if (entry.crystallizedTo) score += 10;
@@ -1314,7 +1486,7 @@ class LearningEngine {
   }
 
   recordPatternUse(patternId: string): void {
-    const entry = this.learnings.find(l => l.id === patternId);
+    const entry = this.learnings.find((l) => l.id === patternId);
     if (entry) {
       entry.useCount = (entry.useCount || 0) + 1;
       this.saveLearnings();
@@ -1323,13 +1495,15 @@ class LearningEngine {
 
   // RISE: Record that a pattern-assisted retry succeeded
   recordPatternSuccess(patternId: string): void {
-    const entry = this.learnings.find(l => l.id === patternId);
+    const entry = this.learnings.find((l) => l.id === patternId);
     if (entry) {
       // Update improvement trajectory to show success
       if (!entry.improvementTrajectory) entry.improvementTrajectory = [];
       entry.improvementTrajectory.push(1.0);
       this.saveLearnings();
-      this.logger?.info(`[foundry] RISE: Pattern ${patternId} success recorded (trajectory: ${entry.improvementTrajectory.length})`);
+      this.logger?.info(
+        `[foundry] RISE: Pattern ${patternId} success recorded (trajectory: ${entry.improvementTrajectory.length})`,
+      );
     }
   }
 
@@ -1340,13 +1514,13 @@ class LearningEngine {
 
     // Auto-crystallize after 3 successful RISE-assisted retries
     const trajectory = pattern.improvementTrajectory || [];
-    const successCount = trajectory.filter(v => v === 1.0).length;
+    const successCount = trajectory.filter((v) => v === 1.0).length;
     return successCount >= 3;
   }
 
   // Get a specific pattern by ID
   getPattern(patternId: string): LearningEntry | undefined {
-    return this.learnings.find(l => l.id === patternId);
+    return this.learnings.find((l) => l.id === patternId);
   }
 
   // Get all learnings
@@ -1359,7 +1533,8 @@ class LearningEngine {
   runOverseer(dataDir?: string): OverseerReport {
     const report: OverseerReport = {
       timestamp: new Date().toISOString(),
-      patternsAnalyzed: this.learnings.filter(l => l.type === "pattern").length,
+      patternsAnalyzed: this.learnings.filter((l) => l.type === "pattern")
+        .length,
       crystallizationCandidates: this.getCrystallizationCandidates(),
       recurringFailures: [],
       evolutionCandidates: [],
@@ -1378,7 +1553,9 @@ class LearningEngine {
 
     // Find recurring failures (same error signature 3+ times without resolution)
     const failureCounts = new Map<string, LearningEntry[]>();
-    for (const l of this.learnings.filter(l => l.type === "failure" && !l.resolution)) {
+    for (const l of this.learnings.filter(
+      (l) => l.type === "failure" && !l.resolution,
+    )) {
       const sig = `${l.tool}:${this.extractErrorSignature(l.error || "")}`;
       const existing = failureCounts.get(sig) || [];
       existing.push(l);
@@ -1387,7 +1564,11 @@ class LearningEngine {
 
     for (const [sig, entries] of failureCounts) {
       if (entries.length >= 3) {
-        report.recurringFailures.push({ signature: sig, count: entries.length, entries });
+        report.recurringFailures.push({
+          signature: sig,
+          count: entries.length,
+          entries,
+        });
       }
     }
 
@@ -1401,8 +1582,12 @@ class LearningEngine {
         // Auto-crystallize patterns that have been used 5+ times (very high value)
         if (candidate.useCount >= 5 && candidate.resolution) {
           const hookId = `auto_crystallized_${candidate.tool}_${Date.now()}`;
-          const escapedError = (candidate.error || "").replace(/`/g, "'").slice(0, 100);
-          const escapedResolution = (candidate.resolution || "").replace(/`/g, "'").slice(0, 200);
+          const escapedError = (candidate.error || "")
+            .replace(/`/g, "'")
+            .slice(0, 100);
+          const escapedResolution = (candidate.resolution || "")
+            .replace(/`/g, "'")
+            .slice(0, 200);
 
           const hookCode = `
     // Auto-crystallized by Overseer from pattern: ${candidate.id}
@@ -1423,23 +1608,27 @@ ${escapedResolution}
           const hookPath = join(hooksDir, `${hookId}.ts`);
           writeFileSync(hookPath, hookCode);
           this.markCrystallized(candidate.id, hookId);
-          report.actionsExecuted.push(`Auto-crystallized pattern ${candidate.id} → ${hookId}`);
+          report.actionsExecuted.push(
+            `Auto-crystallized pattern ${candidate.id} → ${hookId}`,
+          );
         }
       }
     }
 
     // AUTONOMOUS ACTION 2: Prune stale patterns (no uses in 30 days, never crystallized)
     const thirtyDaysAgo = Date.now() - 30 * 24 * 60 * 60 * 1000;
-    const stalePruned = this.learnings.filter(l => {
+    const stalePruned = this.learnings.filter((l) => {
       if (l.type !== "pattern" || l.crystallizedTo) return false;
       const ts = new Date(l.timestamp).getTime();
       return ts < thirtyDaysAgo && (l.useCount || 0) === 0;
     });
 
     if (stalePruned.length > 0) {
-      this.learnings = this.learnings.filter(l => !stalePruned.includes(l));
+      this.learnings = this.learnings.filter((l) => !stalePruned.includes(l));
       this.saveLearnings();
-      report.actionsExecuted.push(`Pruned ${stalePruned.length} stale patterns`);
+      report.actionsExecuted.push(
+        `Pruned ${stalePruned.length} stale patterns`,
+      );
     }
 
     // AUTONOMOUS ACTION 3: Consolidate duplicate failures into patterns
@@ -1450,13 +1639,17 @@ ${escapedResolution}
         const latest = entries[entries.length - 1];
         this.recordInsight(
           `Recurring failure (${count}x): ${signature.slice(0, 80)}`,
-          `Tool: ${latest.tool}, Error: ${latest.error?.slice(0, 100)}`
+          `Tool: ${latest.tool}, Error: ${latest.error?.slice(0, 100)}`,
         );
-        report.actionsExecuted.push(`Created insight for recurring failure: ${signature.slice(0, 50)}...`);
+        report.actionsExecuted.push(
+          `Created insight for recurring failure: ${signature.slice(0, 50)}...`,
+        );
       }
     }
 
-    this.logger?.info(`[foundry] Overseer: ${report.patternsAnalyzed} patterns, ${report.crystallizationCandidates.length} candidates, ${report.recurringFailures.length} recurring failures, ${report.evolutionCandidates.length} evolution candidates, ${report.actionsExecuted.length} actions taken`);
+    this.logger?.info(
+      `[foundry] Overseer: ${report.patternsAnalyzed} patterns, ${report.crystallizationCandidates.length} candidates, ${report.recurringFailures.length} recurring failures, ${report.evolutionCandidates.length} evolution candidates, ${report.actionsExecuted.length} actions taken`,
+    );
 
     // Save report for proactive evolution injection
     this.lastOverseerReport = report;
@@ -1473,7 +1666,9 @@ ${escapedResolution}
     this.overseerInterval = setInterval(() => {
       this.runOverseer(dataDir);
     }, intervalMs);
-    this.logger?.info(`[foundry] Autonomous overseer started (interval: ${intervalMs}ms)`);
+    this.logger?.info(
+      `[foundry] Autonomous overseer started (interval: ${intervalMs}ms)`,
+    );
   }
 
   stopOverseer(): void {
@@ -1495,10 +1690,10 @@ ${escapedResolution}
     this.learnings.push(entry);
 
     // Keep only last 100 success entries to avoid bloat
-    const successEntries = this.learnings.filter(l => l.type === "success");
+    const successEntries = this.learnings.filter((l) => l.type === "success");
     if (successEntries.length > 100) {
       const oldest = successEntries[0];
-      this.learnings = this.learnings.filter(l => l.id !== oldest.id);
+      this.learnings = this.learnings.filter((l) => l.id !== oldest.id);
     }
 
     this.saveLearnings();
@@ -1521,37 +1716,40 @@ ${escapedResolution}
   // RISE: Sort by improvement trajectory success rate
 
   findRelevantLearnings(tool?: string, errorPattern?: string): LearningEntry[] {
-    const relevant = this.learnings.filter(l => {
+    const relevant = this.learnings.filter((l) => {
       if (tool && l.tool !== tool) return false;
-      if (errorPattern && l.error && !l.error.includes(errorPattern)) return false;
+      if (errorPattern && l.error && !l.error.includes(errorPattern))
+        return false;
       return l.type === "pattern" || l.type === "insight";
     });
     // Sort by RISE effectiveness score
     return relevant
-      .sort((a, b) => this.calculatePatternScore(b) - this.calculatePatternScore(a))
+      .sort(
+        (a, b) => this.calculatePatternScore(b) - this.calculatePatternScore(a),
+      )
       .slice(0, 10);
   }
 
   getRecentFailures(limit = 5): LearningEntry[] {
     return this.learnings
-      .filter(l => l.type === "failure" && !l.resolution)
+      .filter((l) => l.type === "failure" && !l.resolution)
       .slice(-limit);
   }
 
   getPatterns(): LearningEntry[] {
-    return this.learnings.filter(l => l.type === "pattern");
+    return this.learnings.filter((l) => l.type === "pattern");
   }
 
   getInsights(): LearningEntry[] {
-    return this.learnings.filter(l => l.type === "insight");
+    return this.learnings.filter((l) => l.type === "insight");
   }
 
   getLearningsSummary(): string {
-    const failures = this.learnings.filter(l => l.type === "failure").length;
-    const patterns = this.learnings.filter(l => l.type === "pattern").length;
-    const crystallized = this.learnings.filter(l => l.crystallizedTo).length;
-    const insights = this.learnings.filter(l => l.type === "insight").length;
-    const successes = this.learnings.filter(l => l.type === "success").length;
+    const failures = this.learnings.filter((l) => l.type === "failure").length;
+    const patterns = this.learnings.filter((l) => l.type === "pattern").length;
+    const crystallized = this.learnings.filter((l) => l.crystallizedTo).length;
+    const insights = this.learnings.filter((l) => l.type === "insight").length;
+    const successes = this.learnings.filter((l) => l.type === "success").length;
     const pending = this.getCrystallizationCandidates().length;
 
     return `${patterns} patterns (${crystallized} crystallized, ${pending} pending), ${insights} insights, ${failures} unresolved, ${successes} successes`;
@@ -1564,7 +1762,10 @@ ${escapedResolution}
       ...session,
       createdAt: new Date().toISOString(),
     };
-    writeFileSync(this.pendingSessionPath, JSON.stringify(this.pendingSession, null, 2));
+    writeFileSync(
+      this.pendingSessionPath,
+      JSON.stringify(this.pendingSession, null, 2),
+    );
     this.logger?.info(`[foundry] Saved pending session: ${session.reason}`);
   }
 
@@ -1606,7 +1807,7 @@ ${escapedResolution}
     writeFileSync(this.outcomesPath, JSON.stringify(this.outcomes, null, 2));
     writeFileSync(
       this.insightsPath,
-      JSON.stringify(Object.fromEntries(this.taskTypeInsights), null, 2)
+      JSON.stringify(Object.fromEntries(this.taskTypeInsights), null, 2),
     );
   }
 
@@ -1615,7 +1816,7 @@ ${escapedResolution}
     taskType: string,
     taskDescription: string,
     taskParams: Record<string, any>,
-    successThreshold?: Record<string, number>
+    successThreshold?: Record<string, number>,
   ): string {
     const outcome: TaskOutcome = {
       id: `outcome_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
@@ -1629,7 +1830,9 @@ ${escapedResolution}
     };
     this.outcomes.push(outcome);
     this.saveOutcomes();
-    this.logger?.info(`[foundry] Tracking outcome: ${taskType} - ${outcome.id}`);
+    this.logger?.info(
+      `[foundry] Tracking outcome: ${taskType} - ${outcome.id}`,
+    );
     return outcome.id;
   }
 
@@ -1637,9 +1840,9 @@ ${escapedResolution}
   recordFeedback(
     outcomeId: string,
     metrics: Record<string, number>,
-    feedbackSource: string
+    feedbackSource: string,
   ): TaskOutcome | null {
-    const outcome = this.outcomes.find(o => o.id === outcomeId);
+    const outcome = this.outcomes.find((o) => o.id === outcomeId);
     if (!outcome) {
       this.logger?.warn?.(`[foundry] Outcome not found: ${outcomeId}`);
       return null;
@@ -1652,13 +1855,13 @@ ${escapedResolution}
     // Determine success based on threshold
     if (outcome.successThreshold) {
       outcome.success = Object.entries(outcome.successThreshold).every(
-        ([key, threshold]) => (outcome.metrics[key] || 0) >= threshold
+        ([key, threshold]) => (outcome.metrics[key] || 0) >= threshold,
       );
     }
 
     this.saveOutcomes();
     this.logger?.info(
-      `[foundry] Recorded feedback for ${outcomeId}: ${JSON.stringify(metrics)} (success: ${outcome.success})`
+      `[foundry] Recorded feedback for ${outcomeId}: ${JSON.stringify(metrics)} (success: ${outcome.success})`,
     );
 
     // Trigger insight regeneration for this task type
@@ -1669,7 +1872,7 @@ ${escapedResolution}
 
   // Get outcomes pending feedback collection
   getPendingFeedback(taskType?: string): TaskOutcome[] {
-    return this.outcomes.filter(o => {
+    return this.outcomes.filter((o) => {
       if (o.feedbackCollectedAt) return false; // Already collected
       if (taskType && o.taskType !== taskType) return false;
       // Only collect feedback after some time has passed (e.g., 1 hour)
@@ -1682,7 +1885,7 @@ ${escapedResolution}
   // Regenerate insights for a task type based on all outcomes
   regenerateInsights(taskType: string): TaskTypeInsights {
     const typeOutcomes = this.outcomes.filter(
-      o => o.taskType === taskType && o.feedbackCollectedAt
+      (o) => o.taskType === taskType && o.feedbackCollectedAt,
     );
 
     if (typeOutcomes.length === 0) {
@@ -1719,13 +1922,14 @@ ${escapedResolution}
     // Find top performers (by first metric or 'views' or 'engagement')
     const primaryMetric = Object.keys(avgMetrics)[0] || "views";
     const sorted = [...typeOutcomes].sort(
-      (a, b) => (b.metrics[primaryMetric] || 0) - (a.metrics[primaryMetric] || 0)
+      (a, b) =>
+        (b.metrics[primaryMetric] || 0) - (a.metrics[primaryMetric] || 0),
     );
     const topPerformers = sorted.slice(0, 3);
 
     // Extract patterns from successful vs unsuccessful
-    const successful = typeOutcomes.filter(o => o.success === true);
-    const unsuccessful = typeOutcomes.filter(o => o.success === false);
+    const successful = typeOutcomes.filter((o) => o.success === true);
+    const unsuccessful = typeOutcomes.filter((o) => o.success === false);
 
     const successfulPatterns = this.extractPatterns(successful);
     const unsuccessfulPatterns = this.extractPatterns(unsuccessful);
@@ -1737,7 +1941,7 @@ ${escapedResolution}
       const topParams = topPerformers[0].taskParams;
       if (topParams.time || topParams.postTime) {
         recommendations.push(
-          `Best performing time: ${topParams.time || topParams.postTime}`
+          `Best performing time: ${topParams.time || topParams.postTime}`,
         );
       }
       if (topParams.hashtags) {
@@ -1748,7 +1952,7 @@ ${escapedResolution}
       }
       if (topParams.length || topParams.duration) {
         recommendations.push(
-          `Optimal length: ${topParams.length || topParams.duration}`
+          `Optimal length: ${topParams.length || topParams.duration}`,
         );
       }
     }
@@ -1782,7 +1986,7 @@ ${escapedResolution}
       const successRate = successful.length / typeOutcomes.length;
       const confidence = Math.min(
         successRate * (typeOutcomes.length / 10), // More samples = higher confidence
-        1.0
+        1.0,
       );
 
       if (confidence >= 0.5 && successfulPatterns.length > 0) {
@@ -1816,7 +2020,7 @@ ${escapedResolution}
           };
 
           this.logger?.info(
-            `[foundry] Generated improvement suggestion for ${taskType} (confidence: ${(confidence * 100).toFixed(0)}%): ${suggestedChanges.length} changes`
+            `[foundry] Generated improvement suggestion for ${taskType} (confidence: ${(confidence * 100).toFixed(0)}%): ${suggestedChanges.length} changes`,
           );
         }
       }
@@ -1825,7 +2029,7 @@ ${escapedResolution}
     this.taskTypeInsights.set(taskType, insights);
     this.saveOutcomes();
     this.logger?.info(
-      `[foundry] Regenerated insights for ${taskType}: ${insights.recommendations.length} recommendations`
+      `[foundry] Regenerated insights for ${taskType}: ${insights.recommendations.length} recommendations`,
     );
 
     return insights;
@@ -1842,7 +2046,8 @@ ${escapedResolution}
     for (const outcome of outcomes) {
       for (const [key, value] of Object.entries(outcome.taskParams)) {
         if (!paramCounts[key]) paramCounts[key] = {};
-        const strValue = typeof value === "string" ? value : JSON.stringify(value);
+        const strValue =
+          typeof value === "string" ? value : JSON.stringify(value);
         paramCounts[key][strValue] = (paramCounts[key][strValue] || 0) + 1;
       }
     }
@@ -1852,7 +2057,9 @@ ${escapedResolution}
     for (const [param, valueCounts] of Object.entries(paramCounts)) {
       for (const [value, count] of Object.entries(valueCounts)) {
         if (count >= threshold) {
-          patterns.push(`${param}: ${value} (${Math.round((count / outcomes.length) * 100)}%)`);
+          patterns.push(
+            `${param}: ${value} (${Math.round((count / outcomes.length) * 100)}%)`,
+          );
         }
       }
     }
@@ -1908,13 +2115,15 @@ ${escapedResolution}
   // Start periodic feedback collection
   startFeedbackCollection(
     collectFn: (outcome: TaskOutcome) => Promise<Record<string, number> | null>,
-    intervalMs = 60 * 60 * 1000 // default: 1 hour
+    intervalMs = 60 * 60 * 1000, // default: 1 hour
   ): void {
     if (this.feedbackCollectionInterval) return;
 
     this.feedbackCollectionInterval = setInterval(async () => {
       const pending = this.getPendingFeedback();
-      this.logger?.info(`[foundry] Checking feedback for ${pending.length} pending outcomes`);
+      this.logger?.info(
+        `[foundry] Checking feedback for ${pending.length} pending outcomes`,
+      );
 
       for (const outcome of pending) {
         try {
@@ -1923,12 +2132,16 @@ ${escapedResolution}
             this.recordFeedback(outcome.id, metrics, "auto_collection");
           }
         } catch (err) {
-          this.logger?.warn?.(`[foundry] Failed to collect feedback for ${outcome.id}: ${err}`);
+          this.logger?.warn?.(
+            `[foundry] Failed to collect feedback for ${outcome.id}: ${err}`,
+          );
         }
       }
     }, intervalMs);
 
-    this.logger?.info(`[foundry] Feedback collection started (interval: ${intervalMs}ms)`);
+    this.logger?.info(
+      `[foundry] Feedback collection started (interval: ${intervalMs}ms)`,
+    );
   }
 
   stopFeedbackCollection(): void {
@@ -1941,7 +2154,7 @@ ${escapedResolution}
   // Get all outcomes for a task type
   getOutcomes(taskType?: string): TaskOutcome[] {
     if (taskType) {
-      return this.outcomes.filter(o => o.taskType === taskType);
+      return this.outcomes.filter((o) => o.taskType === taskType);
     }
     return this.outcomes;
   }
@@ -1988,7 +2201,9 @@ ${escapedResolution}
       }
     }
 
-    return suggestions.sort((a, b) => b.suggestion.confidence - a.suggestion.confidence);
+    return suggestions.sort(
+      (a, b) => b.suggestion.confidence - a.suggestion.confidence,
+    );
   }
 
   // Mark an improvement as applied
@@ -2014,7 +2229,9 @@ ${escapedResolution}
     }
     if (existsSync(this.workflowPatternsPath)) {
       try {
-        const data = JSON.parse(readFileSync(this.workflowPatternsPath, "utf-8"));
+        const data = JSON.parse(
+          readFileSync(this.workflowPatternsPath, "utf-8"),
+        );
         this.workflowPatterns = new Map(Object.entries(data));
       } catch {
         this.workflowPatterns = new Map();
@@ -2025,7 +2242,10 @@ ${escapedResolution}
   private saveWorkflows(): void {
     writeFileSync(this.workflowsPath, JSON.stringify(this.workflows, null, 2));
     const patternsObj = Object.fromEntries(this.workflowPatterns);
-    writeFileSync(this.workflowPatternsPath, JSON.stringify(patternsObj, null, 2));
+    writeFileSync(
+      this.workflowPatternsPath,
+      JSON.stringify(patternsObj, null, 2),
+    );
   }
 
   // Start tracking a new workflow when user sends first message
@@ -2035,7 +2255,9 @@ ${escapedResolution}
       tools: [],
       startedAt: Date.now(),
     };
-    this.logger?.info(`[foundry] Started tracking workflow: ${goal.slice(0, 50)}...`);
+    this.logger?.info(
+      `[foundry] Started tracking workflow: ${goal.slice(0, 50)}...`,
+    );
   }
 
   // Track tool call within current workflow
@@ -2046,7 +2268,10 @@ ${escapedResolution}
   }
 
   // Complete and record the workflow
-  completeWorkflow(outcome: "success" | "failure" | "partial", context: string): void {
+  completeWorkflow(
+    outcome: "success" | "failure" | "partial",
+    context: string,
+  ): void {
     if (!this.currentWorkflow || this.currentWorkflow.tools.length < 2) {
       this.currentWorkflow = null;
       return;
@@ -2063,7 +2288,9 @@ ${escapedResolution}
     };
 
     this.workflows.push(entry);
-    this.logger?.info(`[foundry] Recorded workflow: ${entry.toolSequence.length} tools, outcome=${outcome}`);
+    this.logger?.info(
+      `[foundry] Recorded workflow: ${entry.toolSequence.length} tools, outcome=${outcome}`,
+    );
 
     // Update patterns
     this.updateWorkflowPatterns(entry);
@@ -2078,12 +2305,35 @@ ${escapedResolution}
 
   // Extract keywords from goal text
   private extractGoalKeywords(goal: string): string[] {
-    const stopWords = new Set(["a", "an", "the", "to", "for", "of", "and", "or", "in", "on", "with", "is", "it", "i", "me", "my", "can", "you", "please", "want", "need", "help"]);
+    const stopWords = new Set([
+      "a",
+      "an",
+      "the",
+      "to",
+      "for",
+      "of",
+      "and",
+      "or",
+      "in",
+      "on",
+      "with",
+      "is",
+      "it",
+      "i",
+      "me",
+      "my",
+      "can",
+      "you",
+      "please",
+      "want",
+      "need",
+      "help",
+    ]);
     return goal
       .toLowerCase()
       .replace(/[^a-z0-9\s]/g, "")
       .split(/\s+/)
-      .filter(w => w.length > 2 && !stopWords.has(w))
+      .filter((w) => w.length > 2 && !stopWords.has(w))
       .slice(0, 10);
   }
 
@@ -2097,9 +2347,14 @@ ${escapedResolution}
       // Update existing pattern
       existing.occurrences++;
       existing.lastOccurrence = Date.now();
-      const successCount = existing.successRate * (existing.occurrences - 1) + (entry.outcome === "success" ? 1 : 0);
+      const successCount =
+        existing.successRate * (existing.occurrences - 1) +
+        (entry.outcome === "success" ? 1 : 0);
       existing.successRate = successCount / existing.occurrences;
-      existing.avgDuration = (existing.avgDuration * (existing.occurrences - 1) + (entry.completedAt - entry.startedAt)) / existing.occurrences;
+      existing.avgDuration =
+        (existing.avgDuration * (existing.occurrences - 1) +
+          (entry.completedAt - entry.startedAt)) /
+        existing.occurrences;
       // Merge keywords
       const keywordSet = new Set([...existing.goalKeywords, ...keywords]);
       existing.goalKeywords = Array.from(keywordSet).slice(0, 20);
@@ -2128,13 +2383,23 @@ ${escapedResolution}
 
     for (const pattern of this.workflowPatterns.values()) {
       // Only suggest patterns with enough occurrences and good success rate
-      if (pattern.occurrences < 3 || pattern.successRate < 0.5 || pattern.crystallizedTo) continue;
+      if (
+        pattern.occurrences < 3 ||
+        pattern.successRate < 0.5 ||
+        pattern.crystallizedTo
+      )
+        continue;
 
       // Calculate keyword overlap
-      const overlap = userKeywords.filter(k => pattern.goalKeywords.includes(k)).length;
+      const overlap = userKeywords.filter((k) =>
+        pattern.goalKeywords.includes(k),
+      ).length;
       if (overlap === 0) continue;
 
-      const confidence = (overlap / userKeywords.length) * pattern.successRate * Math.min(pattern.occurrences / 5, 1);
+      const confidence =
+        (overlap / userKeywords.length) *
+        pattern.successRate *
+        Math.min(pattern.occurrences / 5, 1);
       if (confidence < 0.3) continue;
 
       suggestions.push({
@@ -2150,10 +2415,8 @@ ${escapedResolution}
 
   // Get patterns ready for crystallization (convert to a single tool)
   getWorkflowCrystallizationCandidates(): WorkflowPattern[] {
-    return Array.from(this.workflowPatterns.values()).filter(p =>
-      p.occurrences >= 5 &&
-      p.successRate >= 0.7 &&
-      !p.crystallizedTo
+    return Array.from(this.workflowPatterns.values()).filter(
+      (p) => p.occurrences >= 5 && p.successRate >= 0.7 && !p.crystallizedTo,
     );
   }
 
@@ -2163,14 +2426,20 @@ ${escapedResolution}
       if (pattern.id === patternId) {
         pattern.crystallizedTo = toolId;
         this.saveWorkflows();
-        this.logger?.info(`[foundry] Workflow pattern ${patternId} crystallized to tool ${toolId}`);
+        this.logger?.info(
+          `[foundry] Workflow pattern ${patternId} crystallized to tool ${toolId}`,
+        );
         return;
       }
     }
   }
 
   // Get workflow stats for display
-  getWorkflowStats(): { totalWorkflows: number; patterns: number; suggestions: number } {
+  getWorkflowStats(): {
+    totalWorkflows: number;
+    patterns: number;
+    suggestions: number;
+  } {
     const candidateCount = this.getWorkflowCrystallizationCandidates().length;
     return {
       totalWorkflows: this.workflows.length,
@@ -2200,16 +2469,25 @@ interface ValidationResult {
 }
 
 class CodeValidator {
-  private logger?: { info: (msg: string) => void; warn?: (msg: string) => void };
+  private logger?: {
+    info: (msg: string) => void;
+    warn?: (msg: string) => void;
+  };
 
-  constructor(logger?: { info: (msg: string) => void; warn?: (msg: string) => void }) {
+  constructor(logger?: {
+    info: (msg: string) => void;
+    warn?: (msg: string) => void;
+  }) {
     this.logger = logger;
   }
 
   /**
    * Validate generated code before writing.
    */
-  async validate(code: string, type: "extension" | "tool" | "hook"): Promise<ValidationResult> {
+  async validate(
+    code: string,
+    type: "extension" | "tool" | "hook",
+  ): Promise<ValidationResult> {
     const errors: string[] = [];
     const warnings: string[] = [];
     const securityFlags: string[] = [];
@@ -2225,7 +2503,7 @@ class CodeValidator {
     // 2. Security pattern scan (same as skill-review)
     const securityPatterns = this.staticSecurityScan(code);
     if (securityPatterns.blocked.length > 0) {
-      errors.push(...securityPatterns.blocked.map(p => `BLOCKED: ${p}`));
+      errors.push(...securityPatterns.blocked.map((p) => `BLOCKED: ${p}`));
     }
     if (securityPatterns.flagged.length > 0) {
       securityFlags.push(...securityPatterns.flagged);
@@ -2246,7 +2524,9 @@ class CodeValidator {
       warnings.push("Potential infinite loop detected");
     }
 
-    this.logger?.info(`[foundry] Code validation: ${errors.length} errors, ${warnings.length} warnings, ${securityFlags.length} flags`);
+    this.logger?.info(
+      `[foundry] Code validation: ${errors.length} errors, ${warnings.length} warnings, ${securityFlags.length} flags`,
+    );
 
     return {
       valid: errors.length === 0,
@@ -2259,21 +2539,40 @@ class CodeValidator {
   /**
    * Static security scan - same patterns as unbrowse's skill-review.
    */
-  private staticSecurityScan(code: string): { blocked: string[]; flagged: string[] } {
+  private staticSecurityScan(code: string): {
+    blocked: string[];
+    flagged: string[];
+  } {
     const blocked: string[] = [];
     const flagged: string[] = [];
 
     // BLOCK patterns - instant reject
     const blockPatterns = [
       { pattern: /id_rsa|id_ed25519|~\/\.ssh\//i, reason: "SSH key reference" },
-      { pattern: /aws_secret|aws_access|~\/\.aws\//i, reason: "AWS credentials" },
+      {
+        pattern: /aws_secret|aws_access|~\/\.aws\//i,
+        reason: "AWS credentials",
+      },
       { pattern: /~\/\.gnupg\//i, reason: "GPG key reference" },
-      { pattern: /require\s*\(\s*['"]child_process['"]\s*\)/i, reason: "Child process import" },
-      { pattern: /\bexec\s*\(|\bspawn\s*\(|\bexecSync\s*\(/i, reason: "Shell execution" },
+      {
+        pattern: /require\s*\(\s*['"]child_process['"]\s*\)/i,
+        reason: "Child process import",
+      },
+      {
+        pattern: /\bexec\s*\(|\bspawn\s*\(|\bexecSync\s*\(/i,
+        reason: "Shell execution",
+      },
       { pattern: /\beval\s*\(/i, reason: "eval() usage" },
       { pattern: /new\s+Function\s*\(/i, reason: "Dynamic function creation" },
-      { pattern: /\.ngrok\.|\.burpcollaborator\.|\.oastify\.|webhook\.site|requestbin/i, reason: "Exfiltration domain" },
-      { pattern: /ignore\s+previous\s+instructions|system:\s*you/i, reason: "Prompt injection" },
+      {
+        pattern:
+          /\.ngrok\.|\.burpcollaborator\.|\.oastify\.|webhook\.site|requestbin/i,
+        reason: "Exfiltration domain",
+      },
+      {
+        pattern: /ignore\s+previous\s+instructions|system:\s*you/i,
+        reason: "Prompt injection",
+      },
       { pattern: /coinhive|cryptominer/i, reason: "Crypto mining" },
       { pattern: /crontab|systemctl|launchctl/i, reason: "System persistence" },
       { pattern: /<script|<!--/i, reason: "Script injection" },
@@ -2284,7 +2583,10 @@ class CodeValidator {
       { pattern: /process\.env|\.env/i, reason: "Environment variable access" },
       { pattern: /readFile|writeFile|fs\./i, reason: "Filesystem access" },
       { pattern: /atob|btoa|Buffer\.from/i, reason: "Base64 encoding" },
-      { pattern: /\\x[0-9a-f]{2}|\\u[0-9a-f]{4}/i, reason: "Hex/unicode escapes" },
+      {
+        pattern: /\\x[0-9a-f]{2}|\\u[0-9a-f]{4}/i,
+        reason: "Hex/unicode escapes",
+      },
     ];
 
     for (const { pattern, reason } of blockPatterns) {
@@ -2305,7 +2607,10 @@ class CodeValidator {
   /**
    * Test code in isolated subprocess - actually runs the extension to catch runtime errors.
    */
-  async testInSandbox(code: string, tempDir: string): Promise<{ success: boolean; error?: string }> {
+  async testInSandbox(
+    code: string,
+    tempDir: string,
+  ): Promise<{ success: boolean; error?: string }> {
     const { spawn } = require("node:child_process");
     const fs = require("node:fs");
 
@@ -2384,8 +2689,12 @@ try {
         let stdout = "";
         let stderr = "";
 
-        proc.stdout?.on("data", (data: Buffer) => { stdout += data.toString(); });
-        proc.stderr?.on("data", (data: Buffer) => { stderr += data.toString(); });
+        proc.stdout?.on("data", (data: Buffer) => {
+          stdout += data.toString();
+        });
+        proc.stderr?.on("data", (data: Buffer) => {
+          stderr += data.toString();
+        });
 
         proc.on("close", (code: number) => {
           // Clean up
@@ -2397,7 +2706,8 @@ try {
             resolve({ success: true });
           } else {
             const errorMatch = stderr.match(/SANDBOX_ERROR:\s*(.+)/);
-            const error = errorMatch?.[1] || stderr.slice(0, 500) || `Exit code ${code}`;
+            const error =
+              errorMatch?.[1] || stderr.slice(0, 500) || `Exit code ${code}`;
             resolve({ success: false, error });
           }
         });
@@ -2428,14 +2738,20 @@ try {
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
 function toPascalCase(s: string): string {
-  return s.split(/[-_\s]+/).map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join("");
+  return s
+    .split(/[-_\s]+/)
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+    .join("");
 }
 
 function toMethodName(method: string, path: string): string {
-  const parts = path.split("/").filter(Boolean).map(p => {
-    if (p.startsWith("{")) return "By" + toPascalCase(p.slice(1, -1));
-    return toPascalCase(p);
-  });
+  const parts = path
+    .split("/")
+    .filter(Boolean)
+    .map((p) => {
+      if (p.startsWith("{")) return "By" + toPascalCase(p.slice(1, -1));
+      return toPascalCase(p);
+    });
   return method.toLowerCase() + parts.join("");
 }
 
@@ -2444,13 +2760,16 @@ function toMethodName(method: string, path: string): string {
 export default {
   id: "foundry",
   name: "Foundry",
-  description: "Self-writing coding subagent — researches and implements capabilities",
+  description:
+    "Self-writing coding subagent — researches and implements capabilities",
 
   register(api: ClawdbotPluginApi) {
     const logger = api.logger;
     const cfg = api.pluginConfig || {};
-    const dataDir = (cfg as any).dataDir || join(homedir(), ".openclaw", "foundry");
-    const openclawPath = (cfg as any).openclawPath || "/Users/lekt9/Projects/aiko/openclaw";
+    const dataDir =
+      (cfg as any).dataDir || join(homedir(), ".openclaw", "foundry");
+    const openclawPath =
+      (cfg as any).openclawPath || "/Users/lekt9/Projects/aiko/openclaw";
 
     if (!existsSync(dataDir)) mkdirSync(dataDir, { recursive: true });
 
@@ -2471,1500 +2790,2040 @@ export default {
       const toolList = [
         // ── foundry_research ──────────────────────────────────────────────────
         {
-        name: "foundry_research",
-        label: "Research Documentation",
-        description:
-          "Search docs.molt.bot for best practices. Use this before implementing to understand " +
-          "the OpenClaw API, patterns, and conventions.",
-        parameters: {
-          type: "object" as const,
-          properties: {
-            query: {
-              type: "string" as const,
-              description: "What to research (e.g., 'how to write hooks', 'browser automation', 'skill structure')",
-            },
-            topic: {
-              type: "string" as const,
-              enum: ["plugin", "hooks", "tools", "browser", "skills", "agent", "gateway", "channels", "memory", "models", "automation", "nodes", "security"],
-              description: "Specific topic to fetch docs for (optional, faster than query)",
-            },
-            page: {
-              type: "string" as const,
-              description: "Specific doc page path (e.g., '/tools/plugin', '/automation/hooks')",
-            },
-          },
-          required: [],
-        },
-        async execute(_toolCallId: string, params: unknown) {
-          const p = params as { query?: string; topic?: string; page?: string };
-
-          let content: string;
-
-          if (p.page) {
-            content = await docsFetcher.fetchPage(p.page);
-          } else if (p.topic) {
-            content = await docsFetcher.fetchForTopic(p.topic);
-          } else if (p.query) {
-            content = await docsFetcher.search(p.query);
-          } else {
-            content = `## Available Documentation Topics\n\n` +
-              Object.entries(DOC_PAGES).map(([topic, pages]) =>
-                `- **${topic}**: ${pages.join(", ")}`
-              ).join("\n") +
-              `\n\nUse \`topic\` for specific docs, \`query\` for search, or \`page\` for a specific path.`;
-          }
-
-          return { content: [{ type: "text", text: content }] };
-        },
-      },
-
-      // ── foundry_implement ─────────────────────────────────────────────────
-      {
-        name: "foundry_implement",
-        label: "Implement Capability",
-        description:
-          "Research best practices and implement a capability. Describe what you need and this tool " +
-          "will research documentation, patterns, and implement it as an extension or skill.",
-        parameters: {
-          type: "object" as const,
-          properties: {
-            capability: {
-              type: "string" as const,
-              description: "What capability to implement (e.g., 'OAuth token refresh', 'rate limiting', 'webhook handler')",
-            },
-            type: {
-              type: "string" as const,
-              enum: ["extension", "skill", "tool", "hook"],
-              description: "What to create: extension (full plugin), skill (API client), tool (single tool), hook (event handler)",
-            },
-            targetExtension: {
-              type: "string" as const,
-              description: "For tool/hook: which extension to add it to",
-            },
-          },
-          required: ["capability", "type"],
-        },
-        async execute(_toolCallId: string, params: unknown) {
-          const p = params as { capability: string; type: string; targetExtension?: string };
-
-          // Build research context - fetch from docs.molt.bot
-          let context = `## Research Context\n\n`;
-          context += `**Capability requested**: ${p.capability}\n`;
-          context += `**Type**: ${p.type}\n\n`;
-          context += `**Documentation source**: docs.molt.bot\n\n`;
-
-          // Fetch relevant docs based on type
-          try {
-            const relevantTopics: string[] = [];
-            if (p.type === "extension" || p.type === "tool") relevantTopics.push("plugin");
-            if (p.type === "hook" || p.type === "extension") relevantTopics.push("hooks");
-            if (p.type === "skill") relevantTopics.push("skills");
-
-            // Also search for capability-specific docs
-            const searchResults = await docsFetcher.search(p.capability);
-
-            context += `### Relevant Documentation\n\n`;
-            context += searchResults.slice(0, 4000) + "\n\n";
-
-            // Also fetch specific topic docs
-            for (const topic of relevantTopics) {
-              const topicDocs = await docsFetcher.fetchForTopic(topic);
-              context += `### ${topic.charAt(0).toUpperCase() + topic.slice(1)} API\n\n`;
-              context += topicDocs.slice(0, 2000) + "\n\n";
-            }
-          } catch (err) {
-            // Fallback to local docs if fetch fails
-            const docs = writer.getDocs();
-            if (docs.plugin) {
-              context += `### Plugin API (local)\n\n`;
-              context += docs.plugin.slice(0, 3000) + "\n\n";
-            }
-            if (docs.hooks) {
-              context += `### Hooks API (local)\n\n`;
-              context += docs.hooks.slice(0, 2000) + "\n\n";
-            }
-          }
-
-          // Provide implementation guidance
-          context += `## Implementation Guide\n\n`;
-          context += `Based on the docs, here's how to implement "${p.capability}":\n\n`;
-
-          switch (p.type) {
-            case "extension":
-              context += `Use \`foundry_write_extension\` with:\n`;
-              context += `- id: kebab-case identifier\n`;
-              context += `- name: Human-readable name\n`;
-              context += `- description: What it does\n`;
-              context += `- tools: Array of tool definitions\n`;
-              context += `- hooks: Array of hook definitions\n\n`;
-              context += `Each tool needs: name, label, description, properties, required, code\n`;
-              context += `Each hook needs: event (before_agent_start, after_tool_call, before_tool_call, agent_end), code\n`;
-              break;
-
-            case "skill":
-              context += `Use \`foundry_write_skill\` with:\n`;
-              context += `- name: Skill name\n`;
-              context += `- description: What it does\n`;
-              context += `- baseUrl: API base URL\n`;
-              context += `- endpoints: Array of { method, path, description }\n`;
-              context += `- authHeaders: Optional auth headers to store\n`;
-              break;
-
-            case "tool":
-              if (!p.targetExtension) {
-                return { content: [{ type: "text", text: "Error: targetExtension required for type=tool" }] };
-              }
-              context += `Use \`foundry_add_tool\` with:\n`;
-              context += `- extensionId: "${p.targetExtension}"\n`;
-              context += `- name: tool_name (snake_case)\n`;
-              context += `- description: What it does\n`;
-              context += `- properties: Input parameters\n`;
-              context += `- code: The execute function body\n`;
-              break;
-
-            case "hook":
-              if (!p.targetExtension) {
-                return { content: [{ type: "text", text: "Error: targetExtension required for type=hook" }] };
-              }
-              context += `Use \`foundry_add_hook\` with:\n`;
-              context += `- extensionId: "${p.targetExtension}"\n`;
-              context += `- event: One of before_agent_start, after_tool_call, before_tool_call, agent_end\n`;
-              context += `- code: The handler function body (has access to event, ctx)\n`;
-              break;
-          }
-
-          context += `\n## Next Steps\n\n`;
-          context += `1. Review the docs above\n`;
-          context += `2. Design the implementation\n`;
-          context += `3. Call the appropriate foundry_write_* tool with the code\n`;
-
-          return { content: [{ type: "text", text: context }] };
-        },
-      },
-
-      // ── foundry_write_extension ───────────────────────────────────────────
-      {
-        name: "foundry_write_extension",
-        label: "Write Extension",
-        description: "Write a new OpenClaw extension to ~/.openclaw/extensions/. Restart gateway to load.",
-        parameters: {
-          type: "object" as const,
-          properties: {
-            id: { type: "string" as const, description: "Extension ID (kebab-case)" },
-            name: { type: "string" as const, description: "Human-readable name" },
-            description: { type: "string" as const, description: "What this extension does" },
-            tools: {
-              type: "array" as const,
-              description: "Tools to include",
-              items: {
-                type: "object" as const,
-                properties: {
-                  name: { type: "string" as const },
-                  label: { type: "string" as const },
-                  description: { type: "string" as const },
-                  properties: { type: "object" as const },
-                  required: { type: "array" as const, items: { type: "string" as const } },
-                  code: { type: "string" as const, description: "Execute function body" },
-                },
+          name: "foundry_research",
+          label: "Research Documentation",
+          description:
+            "Search docs.molt.bot for best practices. Use this before implementing to understand " +
+            "the OpenClaw API, patterns, and conventions.",
+          parameters: {
+            type: "object" as const,
+            properties: {
+              query: {
+                type: "string" as const,
+                description:
+                  "What to research (e.g., 'how to write hooks', 'browser automation', 'skill structure')",
+              },
+              topic: {
+                type: "string" as const,
+                enum: [
+                  "plugin",
+                  "hooks",
+                  "tools",
+                  "browser",
+                  "skills",
+                  "agent",
+                  "gateway",
+                  "channels",
+                  "memory",
+                  "models",
+                  "automation",
+                  "nodes",
+                  "security",
+                ],
+                description:
+                  "Specific topic to fetch docs for (optional, faster than query)",
+              },
+              page: {
+                type: "string" as const,
+                description:
+                  "Specific doc page path (e.g., '/tools/plugin', '/automation/hooks')",
               },
             },
-            hooks: {
-              type: "array" as const,
-              description: "Hooks to include",
-              items: {
-                type: "object" as const,
-                properties: {
-                  event: { type: "string" as const },
-                  code: { type: "string" as const },
-                },
+            required: [],
+          },
+          async execute(_toolCallId: string, params: unknown) {
+            const p = params as {
+              query?: string;
+              topic?: string;
+              page?: string;
+            };
+
+            let content: string;
+
+            if (p.page) {
+              content = await docsFetcher.fetchPage(p.page);
+            } else if (p.topic) {
+              content = await docsFetcher.fetchForTopic(p.topic);
+            } else if (p.query) {
+              content = await docsFetcher.search(p.query);
+            } else {
+              content =
+                `## Available Documentation Topics\n\n` +
+                Object.entries(DOC_PAGES)
+                  .map(
+                    ([topic, pages]) => `- **${topic}**: ${pages.join(", ")}`,
+                  )
+                  .join("\n") +
+                `\n\nUse \`topic\` for specific docs, \`query\` for search, or \`page\` for a specific path.`;
+            }
+
+            return { content: [{ type: "text", text: content }] };
+          },
+        },
+
+        // ── foundry_implement ─────────────────────────────────────────────────
+        {
+          name: "foundry_implement",
+          label: "Implement Capability",
+          description:
+            "Research best practices and implement a capability. Describe what you need and this tool " +
+            "will research documentation, patterns, and implement it as an extension or skill.",
+          parameters: {
+            type: "object" as const,
+            properties: {
+              capability: {
+                type: "string" as const,
+                description:
+                  "What capability to implement (e.g., 'OAuth token refresh', 'rate limiting', 'webhook handler')",
+              },
+              type: {
+                type: "string" as const,
+                enum: ["extension", "skill", "tool", "hook"],
+                description:
+                  "What to create: extension (full plugin), skill (API client), tool (single tool), hook (event handler)",
+              },
+              targetExtension: {
+                type: "string" as const,
+                description: "For tool/hook: which extension to add it to",
               },
             },
+            required: ["capability", "type"],
           },
-          required: ["id", "name", "description"],
+          async execute(_toolCallId: string, params: unknown) {
+            const p = params as {
+              capability: string;
+              type: string;
+              targetExtension?: string;
+            };
+
+            // Build research context - fetch from docs.molt.bot
+            let context = `## Research Context\n\n`;
+            context += `**Capability requested**: ${p.capability}\n`;
+            context += `**Type**: ${p.type}\n\n`;
+            context += `**Documentation source**: docs.molt.bot\n\n`;
+
+            // Fetch relevant docs based on type
+            try {
+              const relevantTopics: string[] = [];
+              if (p.type === "extension" || p.type === "tool")
+                relevantTopics.push("plugin");
+              if (p.type === "hook" || p.type === "extension")
+                relevantTopics.push("hooks");
+              if (p.type === "skill") relevantTopics.push("skills");
+
+              // Also search for capability-specific docs
+              const searchResults = await docsFetcher.search(p.capability);
+
+              context += `### Relevant Documentation\n\n`;
+              context += searchResults.slice(0, 4000) + "\n\n";
+
+              // Also fetch specific topic docs
+              for (const topic of relevantTopics) {
+                const topicDocs = await docsFetcher.fetchForTopic(topic);
+                context += `### ${topic.charAt(0).toUpperCase() + topic.slice(1)} API\n\n`;
+                context += topicDocs.slice(0, 2000) + "\n\n";
+              }
+            } catch (err) {
+              // Fallback to local docs if fetch fails
+              const docs = writer.getDocs();
+              if (docs.plugin) {
+                context += `### Plugin API (local)\n\n`;
+                context += docs.plugin.slice(0, 3000) + "\n\n";
+              }
+              if (docs.hooks) {
+                context += `### Hooks API (local)\n\n`;
+                context += docs.hooks.slice(0, 2000) + "\n\n";
+              }
+            }
+
+            // Provide implementation guidance
+            context += `## Implementation Guide\n\n`;
+            context += `Based on the docs, here's how to implement "${p.capability}":\n\n`;
+
+            switch (p.type) {
+              case "extension":
+                context += `Use \`foundry_write_extension\` with:\n`;
+                context += `- id: kebab-case identifier\n`;
+                context += `- name: Human-readable name\n`;
+                context += `- description: What it does\n`;
+                context += `- tools: Array of tool definitions\n`;
+                context += `- hooks: Array of hook definitions\n\n`;
+                context += `Each tool needs: name, label, description, properties, required, code\n`;
+                context += `Each hook needs: event (before_agent_start, after_tool_call, before_tool_call, agent_end), code\n`;
+                break;
+
+              case "skill":
+                context += `Use \`foundry_write_skill\` with:\n`;
+                context += `- name: Skill name\n`;
+                context += `- description: What it does\n`;
+                context += `- baseUrl: API base URL\n`;
+                context += `- endpoints: Array of { method, path, description }\n`;
+                context += `- authHeaders: Optional auth headers to store\n`;
+                break;
+
+              case "tool":
+                if (!p.targetExtension) {
+                  return {
+                    content: [
+                      {
+                        type: "text",
+                        text: "Error: targetExtension required for type=tool",
+                      },
+                    ],
+                  };
+                }
+                context += `Use \`foundry_add_tool\` with:\n`;
+                context += `- extensionId: "${p.targetExtension}"\n`;
+                context += `- name: tool_name (snake_case)\n`;
+                context += `- description: What it does\n`;
+                context += `- properties: Input parameters\n`;
+                context += `- code: The execute function body\n`;
+                break;
+
+              case "hook":
+                if (!p.targetExtension) {
+                  return {
+                    content: [
+                      {
+                        type: "text",
+                        text: "Error: targetExtension required for type=hook",
+                      },
+                    ],
+                  };
+                }
+                context += `Use \`foundry_add_hook\` with:\n`;
+                context += `- extensionId: "${p.targetExtension}"\n`;
+                context += `- event: One of before_agent_start, after_tool_call, before_tool_call, agent_end\n`;
+                context += `- code: The handler function body (has access to event, ctx)\n`;
+                break;
+            }
+
+            context += `\n## Next Steps\n\n`;
+            context += `1. Review the docs above\n`;
+            context += `2. Design the implementation\n`;
+            context += `3. Call the appropriate foundry_write_* tool with the code\n`;
+
+            return { content: [{ type: "text", text: context }] };
+          },
         },
-        async execute(_toolCallId: string, params: unknown) {
-          const p = params as any;
 
-          const tools: ToolDef[] = (p.tools || []).map((t: any) => ({
-            name: t.name,
-            label: t.label,
-            description: t.description || "",
-            properties: t.properties || {},
-            required: t.required || [],
-            code: t.code || "return { content: [{ type: 'text', text: 'Not implemented' }] };",
-          }));
-
-          const hooks: HookDef[] = (p.hooks || []).map((h: any) => ({
-            event: h.event,
-            code: h.code || "// No-op",
-          }));
-
-          try {
-            const { path: extDir, validation } = await writer.writeExtension({
-              id: p.id,
-              name: p.name,
-              description: p.description,
-              tools,
-              hooks,
-            }, codeValidator);
-
-            let output = `## Extension Written\n\n` +
-              `**${p.name}** (\`${p.id}\`)\n\n` +
-              `- Location: \`${extDir}\`\n` +
-              `- Tools: ${tools.length}\n` +
-              `- Hooks: ${hooks.length}\n`;
-
-            if (validation.warnings.length > 0) {
-              output += `\n**Warnings:**\n${validation.warnings.map(w => `- ${w}`).join("\n")}\n`;
-            }
-            if (validation.securityFlags.length > 0) {
-              output += `\n**Security flags (review recommended):**\n${validation.securityFlags.map(f => `- ${f}`).join("\n")}\n`;
-            }
-
-            output += `\n**Run \`openclaw gateway restart\` to load.**`;
-
-            return { content: [{ type: "text", text: output }] };
-          } catch (err: any) {
-            // SelfEvolve (arXiv:2306.02907): Return structured feedback for LLM refinement
-            const errorMsg = err.message || String(err);
-            const isSandboxError = errorMsg.includes("Sandbox");
-            const isValidationError = errorMsg.includes("validation");
-
-            // Record the failure for learning
-            learningEngine.recordFailure(
-              "foundry_write_extension",
-              errorMsg,
-              `Extension: ${p.id}, Tools: ${tools.length}, Hooks: ${hooks.length}`,
-              isSandboxError ? "sandbox_runtime_error" : "validation_error"
-            );
-
-            // Build detailed feedback for the LLM to self-correct
-            let feedback = `## Extension FAILED - SelfEvolve Feedback\n\n`;
-            feedback += `**Extension**: ${p.name} (\`${p.id}\`)\n\n`;
-            feedback += `### Error Type\n`;
-            feedback += isSandboxError
-              ? `**Runtime Error** - The code compiled but failed during execution.\n`
-              : `**Validation Error** - The code failed static analysis.\n`;
-            feedback += `\n### Error Details\n\`\`\`\n${errorMsg}\n\`\`\`\n\n`;
-
-            // Provide specific guidance based on error type
-            feedback += `### How to Fix\n`;
-            if (isSandboxError) {
-              feedback += `1. Check for undefined variables or missing imports\n`;
-              feedback += `2. Ensure all async functions are properly awaited\n`;
-              feedback += `3. Verify the code handles edge cases (null, undefined, empty)\n`;
-              feedback += `4. Check that external dependencies are available\n`;
-            } else if (isValidationError) {
-              feedback += `1. Review the validation rules in the error message\n`;
-              feedback += `2. Remove any blocked patterns (dangerous code, etc.)\n`;
-              feedback += `3. Ensure proper types and structure\n`;
-            }
-
-            feedback += `\n### Retry Instructions\n`;
-            feedback += `Fix the issues above and call \`foundry_write_extension\` again with corrected code.\n`;
-            feedback += `The code should be self-contained and not rely on external state.\n`;
-
-            return { content: [{ type: "text", text: feedback }] };
-          }
-        },
-      },
-
-      // ── foundry_write_skill (OpenClaw/AgentSkills-compatible) ───────────────
-      {
-        name: "foundry_write_skill",
-        label: "Write Skill",
-        description: "Write an OpenClaw/AgentSkills-compatible skill (SKILL.md) to ~/.openclaw/skills/. Supports both general skills and API-based skills.",
-        parameters: {
-          type: "object" as const,
-          properties: {
-            name: { type: "string" as const, description: "Skill name (kebab-case recommended, e.g., 'my-skill')" },
-            description: { type: "string" as const, description: "What this skill does (appears in frontmatter)" },
-            content: { type: "string" as const, description: "Markdown content for the skill (after frontmatter)" },
-            // OpenClaw frontmatter options
-            homepage: { type: "string" as const, description: "URL for skill documentation/website" },
-            userInvocable: { type: "boolean" as const, description: "Whether skill is exposed as user slash command (default: true)" },
-            disableModelInvocation: { type: "boolean" as const, description: "Exclude from model prompt (default: false)" },
-            commandDispatch: { type: "string" as const, enum: ["tool"], description: "Bypass model and dispatch directly to tool" },
-            commandTool: { type: "string" as const, description: "Tool name when command-dispatch is 'tool'" },
-            commandArgMode: { type: "string" as const, enum: ["raw"], description: "How to forward args to tool" },
-            metadata: {
-              type: "object" as const,
-              description: "OpenClaw metadata for gating (requires.bins, requires.env, etc.)",
-              properties: {
-                openclaw: {
+        // ── foundry_write_extension ───────────────────────────────────────────
+        {
+          name: "foundry_write_extension",
+          label: "Write Extension",
+          description:
+            "Write a new OpenClaw extension to ~/.openclaw/extensions/. Restart gateway to load.",
+          parameters: {
+            type: "object" as const,
+            properties: {
+              id: {
+                type: "string" as const,
+                description: "Extension ID (kebab-case)",
+              },
+              name: {
+                type: "string" as const,
+                description: "Human-readable name",
+              },
+              description: {
+                type: "string" as const,
+                description: "What this extension does",
+              },
+              tools: {
+                type: "array" as const,
+                description: "Tools to include",
+                items: {
                   type: "object" as const,
                   properties: {
-                    always: { type: "boolean" as const, description: "Always include skill (skip gates)" },
-                    emoji: { type: "string" as const, description: "Emoji for macOS Skills UI" },
-                    homepage: { type: "string" as const, description: "URL for macOS Skills UI" },
-                    os: { type: "array" as const, items: { type: "string" as const, enum: ["darwin", "linux", "win32"] } },
-                    primaryEnv: { type: "string" as const, description: "Env var for apiKey mapping" },
-                    skillKey: { type: "string" as const, description: "Config key override" },
-                    requires: {
-                      type: "object" as const,
-                      properties: {
-                        bins: { type: "array" as const, items: { type: "string" as const }, description: "Required binaries on PATH" },
-                        anyBins: { type: "array" as const, items: { type: "string" as const }, description: "At least one required" },
-                        env: { type: "array" as const, items: { type: "string" as const }, description: "Required env vars" },
-                        config: { type: "array" as const, items: { type: "string" as const }, description: "Required config paths" },
+                    name: { type: "string" as const },
+                    label: { type: "string" as const },
+                    description: { type: "string" as const },
+                    properties: { type: "object" as const },
+                    required: {
+                      type: "array" as const,
+                      items: { type: "string" as const },
+                    },
+                    code: {
+                      type: "string" as const,
+                      description: "Execute function body",
+                    },
+                  },
+                },
+              },
+              hooks: {
+                type: "array" as const,
+                description: "Hooks to include",
+                items: {
+                  type: "object" as const,
+                  properties: {
+                    event: { type: "string" as const },
+                    code: { type: "string" as const },
+                  },
+                },
+              },
+            },
+            required: ["id", "name", "description"],
+          },
+          async execute(_toolCallId: string, params: unknown) {
+            const p = params as any;
+
+            const tools: ToolDef[] = (p.tools || []).map((t: any) => ({
+              name: t.name,
+              label: t.label,
+              description: t.description || "",
+              properties: t.properties || {},
+              required: t.required || [],
+              code:
+                t.code ||
+                "return { content: [{ type: 'text', text: 'Not implemented' }] };",
+            }));
+
+            const hooks: HookDef[] = (p.hooks || []).map((h: any) => ({
+              event: h.event,
+              code: h.code || "// No-op",
+            }));
+
+            try {
+              const { path: extDir, validation } = await writer.writeExtension(
+                {
+                  id: p.id,
+                  name: p.name,
+                  description: p.description,
+                  tools,
+                  hooks,
+                },
+                codeValidator,
+              );
+
+              let output =
+                `## Extension Written\n\n` +
+                `**${p.name}** (\`${p.id}\`)\n\n` +
+                `- Location: \`${extDir}\`\n` +
+                `- Tools: ${tools.length}\n` +
+                `- Hooks: ${hooks.length}\n`;
+
+              if (validation.warnings.length > 0) {
+                output += `\n**Warnings:**\n${validation.warnings.map((w) => `- ${w}`).join("\n")}\n`;
+              }
+              if (validation.securityFlags.length > 0) {
+                output += `\n**Security flags (review recommended):**\n${validation.securityFlags.map((f) => `- ${f}`).join("\n")}\n`;
+              }
+
+              output += `\n**Run \`openclaw gateway restart\` to load.**`;
+
+              return { content: [{ type: "text", text: output }] };
+            } catch (err: any) {
+              // SelfEvolve (arXiv:2306.02907): Return structured feedback for LLM refinement
+              const errorMsg = err.message || String(err);
+              const isSandboxError = errorMsg.includes("Sandbox");
+              const isValidationError = errorMsg.includes("validation");
+
+              // Record the failure for learning
+              learningEngine.recordFailure(
+                "foundry_write_extension",
+                errorMsg,
+                `Extension: ${p.id}, Tools: ${tools.length}, Hooks: ${hooks.length}`,
+                isSandboxError ? "sandbox_runtime_error" : "validation_error",
+              );
+
+              // Build detailed feedback for the LLM to self-correct
+              let feedback = `## Extension FAILED - SelfEvolve Feedback\n\n`;
+              feedback += `**Extension**: ${p.name} (\`${p.id}\`)\n\n`;
+              feedback += `### Error Type\n`;
+              feedback += isSandboxError
+                ? `**Runtime Error** - The code compiled but failed during execution.\n`
+                : `**Validation Error** - The code failed static analysis.\n`;
+              feedback += `\n### Error Details\n\`\`\`\n${errorMsg}\n\`\`\`\n\n`;
+
+              // Provide specific guidance based on error type
+              feedback += `### How to Fix\n`;
+              if (isSandboxError) {
+                feedback += `1. Check for undefined variables or missing imports\n`;
+                feedback += `2. Ensure all async functions are properly awaited\n`;
+                feedback += `3. Verify the code handles edge cases (null, undefined, empty)\n`;
+                feedback += `4. Check that external dependencies are available\n`;
+              } else if (isValidationError) {
+                feedback += `1. Review the validation rules in the error message\n`;
+                feedback += `2. Remove any blocked patterns (dangerous code, etc.)\n`;
+                feedback += `3. Ensure proper types and structure\n`;
+              }
+
+              feedback += `\n### Retry Instructions\n`;
+              feedback += `Fix the issues above and call \`foundry_write_extension\` again with corrected code.\n`;
+              feedback += `The code should be self-contained and not rely on external state.\n`;
+
+              return { content: [{ type: "text", text: feedback }] };
+            }
+          },
+        },
+
+        // ── foundry_write_skill (OpenClaw/AgentSkills-compatible) ───────────────
+        {
+          name: "foundry_write_skill",
+          label: "Write Skill",
+          description:
+            "Write an OpenClaw/AgentSkills-compatible skill (SKILL.md) to ~/.openclaw/skills/. Supports both general skills and API-based skills.",
+          parameters: {
+            type: "object" as const,
+            properties: {
+              name: {
+                type: "string" as const,
+                description:
+                  "Skill name (kebab-case recommended, e.g., 'my-skill')",
+              },
+              description: {
+                type: "string" as const,
+                description: "What this skill does (appears in frontmatter)",
+              },
+              content: {
+                type: "string" as const,
+                description:
+                  "Markdown content for the skill (after frontmatter)",
+              },
+              // OpenClaw frontmatter options
+              homepage: {
+                type: "string" as const,
+                description: "URL for skill documentation/website",
+              },
+              userInvocable: {
+                type: "boolean" as const,
+                description:
+                  "Whether skill is exposed as user slash command (default: true)",
+              },
+              disableModelInvocation: {
+                type: "boolean" as const,
+                description: "Exclude from model prompt (default: false)",
+              },
+              commandDispatch: {
+                type: "string" as const,
+                enum: ["tool"],
+                description: "Bypass model and dispatch directly to tool",
+              },
+              commandTool: {
+                type: "string" as const,
+                description: "Tool name when command-dispatch is 'tool'",
+              },
+              commandArgMode: {
+                type: "string" as const,
+                enum: ["raw"],
+                description: "How to forward args to tool",
+              },
+              metadata: {
+                type: "object" as const,
+                description:
+                  "OpenClaw metadata for gating (requires.bins, requires.env, etc.)",
+                properties: {
+                  openclaw: {
+                    type: "object" as const,
+                    properties: {
+                      always: {
+                        type: "boolean" as const,
+                        description: "Always include skill (skip gates)",
+                      },
+                      emoji: {
+                        type: "string" as const,
+                        description: "Emoji for macOS Skills UI",
+                      },
+                      homepage: {
+                        type: "string" as const,
+                        description: "URL for macOS Skills UI",
+                      },
+                      os: {
+                        type: "array" as const,
+                        items: {
+                          type: "string" as const,
+                          enum: ["darwin", "linux", "win32"],
+                        },
+                      },
+                      primaryEnv: {
+                        type: "string" as const,
+                        description: "Env var for apiKey mapping",
+                      },
+                      skillKey: {
+                        type: "string" as const,
+                        description: "Config key override",
+                      },
+                      requires: {
+                        type: "object" as const,
+                        properties: {
+                          bins: {
+                            type: "array" as const,
+                            items: { type: "string" as const },
+                            description: "Required binaries on PATH",
+                          },
+                          anyBins: {
+                            type: "array" as const,
+                            items: { type: "string" as const },
+                            description: "At least one required",
+                          },
+                          env: {
+                            type: "array" as const,
+                            items: { type: "string" as const },
+                            description: "Required env vars",
+                          },
+                          config: {
+                            type: "array" as const,
+                            items: { type: "string" as const },
+                            description: "Required config paths",
+                          },
+                        },
                       },
                     },
                   },
                 },
               },
-            },
-            // Legacy API-based skill support
-            baseUrl: { type: "string" as const, description: "(Legacy) API base URL for API-based skills" },
-            endpoints: {
-              type: "array" as const,
-              description: "(Legacy) API endpoints for API-based skills",
-              items: {
-                type: "object" as const,
-                properties: {
-                  method: { type: "string" as const, enum: ["GET", "POST", "PUT", "DELETE", "PATCH"] },
-                  path: { type: "string" as const, description: "Path with {param} placeholders" },
-                  description: { type: "string" as const },
-                },
-              },
-            },
-            authHeaders: {
-              type: "object" as const,
-              description: "(Legacy) Auth headers for API-based skills",
-            },
-          },
-          required: ["name", "description"],
-        },
-        async execute(_toolCallId: string, params: unknown) {
-          const p = params as any;
-
-          const skillDir = writer.writeSkill({
-            name: p.name,
-            description: p.description,
-            content: p.content,
-            homepage: p.homepage,
-            userInvocable: p.userInvocable,
-            disableModelInvocation: p.disableModelInvocation,
-            commandDispatch: p.commandDispatch,
-            commandTool: p.commandTool,
-            commandArgMode: p.commandArgMode,
-            metadata: p.metadata,
-            baseUrl: p.baseUrl,
-            endpoints: p.endpoints,
-            authHeaders: p.authHeaders,
-          });
-
-          const isApiSkill = p.baseUrl && p.endpoints?.length > 0;
-          let summary = `## Skill Written (OpenClaw-compatible)\n\n` +
-            `**${p.name}**\n\n` +
-            `- Location: \`${skillDir}\`\n` +
-            `- Format: AgentSkills/OpenClaw SKILL.md\n`;
-
-          if (isApiSkill) {
-            summary += `- Type: API-based skill\n` +
-              `- Base URL: \`${p.baseUrl}\`\n` +
-              `- Endpoints: ${p.endpoints.length}\n`;
-          } else {
-            summary += `- Type: General skill\n`;
-          }
-
-          if (p.metadata?.openclaw?.requires) {
-            const req = p.metadata.openclaw.requires;
-            if (req.bins?.length) summary += `- Required bins: ${req.bins.join(", ")}\n`;
-            if (req.env?.length) summary += `- Required env: ${req.env.join(", ")}\n`;
-            if (req.config?.length) summary += `- Required config: ${req.config.join(", ")}\n`;
-          }
-
-          summary += `\nSkill is ready. Restart gateway or start new session to load.`;
-
-          return { content: [{ type: "text", text: summary }] };
-        },
-      },
-
-      // ── foundry_write_browser_skill ─────────────────────────────────────────
-      {
-        name: "foundry_write_browser_skill",
-        label: "Write Browser Skill",
-        description: "Write a browser automation skill that uses the OpenClaw browser tool. Automatically gates on browser.enabled config.",
-        parameters: {
-          type: "object" as const,
-          properties: {
-            name: { type: "string" as const, description: "Skill name (kebab-case, e.g., 'twitter-poster')" },
-            description: { type: "string" as const, description: "What this skill automates" },
-            targetUrl: { type: "string" as const, description: "Primary URL this skill interacts with" },
-            actions: {
-              type: "array" as const,
-              description: "Documented browser actions",
-              items: {
-                type: "object" as const,
-                properties: {
-                  name: { type: "string" as const, description: "Action name (e.g., 'Post Tweet')" },
-                  description: { type: "string" as const, description: "What this action does" },
-                  steps: { type: "array" as const, items: { type: "string" as const }, description: "Step-by-step instructions" },
-                },
-              },
-            },
-            authMethod: {
-              type: "string" as const,
-              enum: ["manual", "cookie", "header", "oauth"],
-              description: "How authentication is handled",
-            },
-            authNotes: { type: "string" as const, description: "Additional auth instructions" },
-            content: { type: "string" as const, description: "Additional markdown content" },
-            metadata: {
-              type: "object" as const,
-              description: "Additional OpenClaw metadata",
-            },
-          },
-          required: ["name", "description"],
-        },
-        async execute(_toolCallId: string, params: unknown) {
-          const p = params as any;
-
-          const skillDir = writer.writeBrowserSkill({
-            name: p.name,
-            description: p.description,
-            targetUrl: p.targetUrl,
-            actions: p.actions,
-            authMethod: p.authMethod,
-            authNotes: p.authNotes,
-            content: p.content,
-            metadata: p.metadata,
-          });
-
-          let summary = `## Browser Skill Written\n\n` +
-            `**${p.name}**\n\n` +
-            `- Location: \`${skillDir}\`\n` +
-            `- Type: Browser automation skill\n` +
-            `- Target: ${p.targetUrl || "Not specified"}\n` +
-            `- Auth: ${p.authMethod || "none"}\n` +
-            `- Gated on: \`browser.enabled\` config\n`;
-
-          if (p.actions?.length) {
-            summary += `- Actions: ${p.actions.map((a: any) => a.name).join(", ")}\n`;
-          }
-
-          summary += `\nSkill is ready. Enable browser in config and restart gateway to use.`;
-
-          return { content: [{ type: "text", text: summary }] };
-        },
-      },
-
-      // ── foundry_write_hook ──────────────────────────────────────────────────
-      {
-        name: "foundry_write_hook",
-        label: "Write Hook",
-        description: "Write a standalone OpenClaw hook (HOOK.md + handler.ts) to ~/.openclaw/hooks/. Hooks trigger on events like command:new, gateway:startup, etc.",
-        parameters: {
-          type: "object" as const,
-          properties: {
-            name: { type: "string" as const, description: "Hook name (kebab-case, e.g., 'welcome-message')" },
-            description: { type: "string" as const, description: "What this hook does" },
-            events: {
-              type: "array" as const,
-              items: {
+              // Legacy API-based skill support
+              baseUrl: {
                 type: "string" as const,
-                enum: ["command:new", "command:reset", "command:stop", "agent:bootstrap", "gateway:startup", "tool_result_persist"],
+                description: "(Legacy) API base URL for API-based skills",
               },
-              description: "Events that trigger this hook",
+              endpoints: {
+                type: "array" as const,
+                description: "(Legacy) API endpoints for API-based skills",
+                items: {
+                  type: "object" as const,
+                  properties: {
+                    method: {
+                      type: "string" as const,
+                      enum: ["GET", "POST", "PUT", "DELETE", "PATCH"],
+                    },
+                    path: {
+                      type: "string" as const,
+                      description: "Path with {param} placeholders",
+                    },
+                    description: { type: "string" as const },
+                  },
+                },
+              },
+              authHeaders: {
+                type: "object" as const,
+                description: "(Legacy) Auth headers for API-based skills",
+              },
             },
-            code: {
-              type: "string" as const,
-              description: "Handler code (TypeScript). Should define a `handler` const of type HookHandler.",
+            required: ["name", "description"],
+          },
+          async execute(_toolCallId: string, params: unknown) {
+            const p = params as any;
+
+            const skillDir = writer.writeSkill({
+              name: p.name,
+              description: p.description,
+              content: p.content,
+              homepage: p.homepage,
+              userInvocable: p.userInvocable,
+              disableModelInvocation: p.disableModelInvocation,
+              commandDispatch: p.commandDispatch,
+              commandTool: p.commandTool,
+              commandArgMode: p.commandArgMode,
+              metadata: p.metadata,
+              baseUrl: p.baseUrl,
+              endpoints: p.endpoints,
+              authHeaders: p.authHeaders,
+            });
+
+            const isApiSkill = p.baseUrl && p.endpoints?.length > 0;
+            let summary =
+              `## Skill Written (OpenClaw-compatible)\n\n` +
+              `**${p.name}**\n\n` +
+              `- Location: \`${skillDir}\`\n` +
+              `- Format: AgentSkills/OpenClaw SKILL.md\n`;
+
+            if (isApiSkill) {
+              summary +=
+                `- Type: API-based skill\n` +
+                `- Base URL: \`${p.baseUrl}\`\n` +
+                `- Endpoints: ${p.endpoints.length}\n`;
+            } else {
+              summary += `- Type: General skill\n`;
+            }
+
+            if (p.metadata?.openclaw?.requires) {
+              const req = p.metadata.openclaw.requires;
+              if (req.bins?.length)
+                summary += `- Required bins: ${req.bins.join(", ")}\n`;
+              if (req.env?.length)
+                summary += `- Required env: ${req.env.join(", ")}\n`;
+              if (req.config?.length)
+                summary += `- Required config: ${req.config.join(", ")}\n`;
+            }
+
+            summary += `\nSkill is ready. Restart gateway or start new session to load.`;
+
+            return { content: [{ type: "text", text: summary }] };
+          },
+        },
+
+        // ── foundry_write_browser_skill ─────────────────────────────────────────
+        {
+          name: "foundry_write_browser_skill",
+          label: "Write Browser Skill",
+          description:
+            "Write a browser automation skill that uses the OpenClaw browser tool. Automatically gates on browser.enabled config.",
+          parameters: {
+            type: "object" as const,
+            properties: {
+              name: {
+                type: "string" as const,
+                description: "Skill name (kebab-case, e.g., 'twitter-poster')",
+              },
+              description: {
+                type: "string" as const,
+                description: "What this skill automates",
+              },
+              targetUrl: {
+                type: "string" as const,
+                description: "Primary URL this skill interacts with",
+              },
+              actions: {
+                type: "array" as const,
+                description: "Documented browser actions",
+                items: {
+                  type: "object" as const,
+                  properties: {
+                    name: {
+                      type: "string" as const,
+                      description: "Action name (e.g., 'Post Tweet')",
+                    },
+                    description: {
+                      type: "string" as const,
+                      description: "What this action does",
+                    },
+                    steps: {
+                      type: "array" as const,
+                      items: { type: "string" as const },
+                      description: "Step-by-step instructions",
+                    },
+                  },
+                },
+              },
+              authMethod: {
+                type: "string" as const,
+                enum: ["manual", "cookie", "header", "oauth"],
+                description: "How authentication is handled",
+              },
+              authNotes: {
+                type: "string" as const,
+                description: "Additional auth instructions",
+              },
+              content: {
+                type: "string" as const,
+                description: "Additional markdown content",
+              },
+              metadata: {
+                type: "object" as const,
+                description: "Additional OpenClaw metadata",
+              },
             },
-            metadata: {
-              type: "object" as const,
-              description: "OpenClaw metadata (emoji, requires, etc.)",
+            required: ["name", "description"],
+          },
+          async execute(_toolCallId: string, params: unknown) {
+            const p = params as any;
+
+            const skillDir = writer.writeBrowserSkill({
+              name: p.name,
+              description: p.description,
+              targetUrl: p.targetUrl,
+              actions: p.actions,
+              authMethod: p.authMethod,
+              authNotes: p.authNotes,
+              content: p.content,
+              metadata: p.metadata,
+            });
+
+            let summary =
+              `## Browser Skill Written\n\n` +
+              `**${p.name}**\n\n` +
+              `- Location: \`${skillDir}\`\n` +
+              `- Type: Browser automation skill\n` +
+              `- Target: ${p.targetUrl || "Not specified"}\n` +
+              `- Auth: ${p.authMethod || "none"}\n` +
+              `- Gated on: \`browser.enabled\` config\n`;
+
+            if (p.actions?.length) {
+              summary += `- Actions: ${p.actions.map((a: any) => a.name).join(", ")}\n`;
+            }
+
+            summary += `\nSkill is ready. Enable browser in config and restart gateway to use.`;
+
+            return { content: [{ type: "text", text: summary }] };
+          },
+        },
+
+        // ── foundry_write_hook ──────────────────────────────────────────────────
+        {
+          name: "foundry_write_hook",
+          label: "Write Hook",
+          description:
+            "Write a standalone OpenClaw hook (HOOK.md + handler.ts) to ~/.openclaw/hooks/. Hooks trigger on events like command:new, gateway:startup, etc.",
+          parameters: {
+            type: "object" as const,
+            properties: {
+              name: {
+                type: "string" as const,
+                description: "Hook name (kebab-case, e.g., 'welcome-message')",
+              },
+              description: {
+                type: "string" as const,
+                description: "What this hook does",
+              },
+              events: {
+                type: "array" as const,
+                items: {
+                  type: "string" as const,
+                  enum: [
+                    "command:new",
+                    "command:reset",
+                    "command:stop",
+                    "agent:bootstrap",
+                    "gateway:startup",
+                    "tool_result_persist",
+                  ],
+                },
+                description: "Events that trigger this hook",
+              },
+              code: {
+                type: "string" as const,
+                description:
+                  "Handler code (TypeScript). Should define a `handler` const of type HookHandler.",
+              },
+              metadata: {
+                type: "object" as const,
+                description: "OpenClaw metadata (emoji, requires, etc.)",
+              },
             },
+            required: ["name", "description", "events"],
           },
-          required: ["name", "description", "events"],
-        },
-        async execute(_toolCallId: string, params: unknown) {
-          const p = params as any;
+          async execute(_toolCallId: string, params: unknown) {
+            const p = params as any;
 
-          const hookDir = writer.writeHook({
-            name: p.name,
-            description: p.description,
-            events: p.events,
-            code: p.code,
-            metadata: p.metadata,
-          });
+            const hookDir = writer.writeHook({
+              name: p.name,
+              description: p.description,
+              events: p.events,
+              code: p.code,
+              metadata: p.metadata,
+            });
 
-          const summary = `## Hook Written\n\n` +
-            `**${p.name}**\n\n` +
-            `- Location: \`${hookDir}\`\n` +
-            `- Events: ${p.events.join(", ")}\n` +
-            `- Files: HOOK.md, handler.ts\n\n` +
-            `Enable with: \`openclaw hooks enable ${p.name}\``;
+            const summary =
+              `## Hook Written\n\n` +
+              `**${p.name}**\n\n` +
+              `- Location: \`${hookDir}\`\n` +
+              `- Events: ${p.events.join(", ")}\n` +
+              `- Files: HOOK.md, handler.ts\n\n` +
+              `Enable with: \`openclaw hooks enable ${p.name}\``;
 
-          return { content: [{ type: "text", text: summary }] };
-        },
-      },
-
-      // ── foundry_add_tool ──────────────────────────────────────────────────
-      {
-        name: "foundry_add_tool",
-        label: "Add Tool",
-        description: "Add a new tool to an existing extension",
-        parameters: {
-          type: "object" as const,
-          properties: {
-            extensionId: { type: "string" as const, description: "Extension to add tool to" },
-            name: { type: "string" as const, description: "Tool name (snake_case)" },
-            label: { type: "string" as const, description: "Display label" },
-            description: { type: "string" as const, description: "What the tool does" },
-            properties: { type: "object" as const, description: "Input properties" },
-            required: { type: "array" as const, items: { type: "string" as const } },
-            code: { type: "string" as const, description: "Execute function body" },
+            return { content: [{ type: "text", text: summary }] };
           },
-          required: ["extensionId", "name", "description", "code"],
         },
-        async execute(_toolCallId: string, params: unknown) {
-          const p = params as any;
 
-          const success = writer.addTool(p.extensionId, {
-            name: p.name,
-            label: p.label,
-            description: p.description,
-            properties: p.properties || {},
-            required: p.required || [],
-            code: p.code,
-          });
-
-          if (!success) {
-            return { content: [{ type: "text", text: `Extension "${p.extensionId}" not found.` }] };
-          }
-
-          return {
-            content: [{
-              type: "text",
-              text: `Added tool **${p.name}** to **${p.extensionId}**.\n\nRestart gateway to load.`,
-            }],
-          };
-        },
-      },
-
-      // ── foundry_add_hook ──────────────────────────────────────────────────
-      {
-        name: "foundry_add_hook",
-        label: "Add Hook",
-        description: "Add a new hook to an existing extension",
-        parameters: {
-          type: "object" as const,
-          properties: {
-            extensionId: { type: "string" as const, description: "Extension to add hook to" },
-            event: {
-              type: "string" as const,
-              enum: ["before_agent_start", "after_tool_call", "before_tool_call", "agent_end"],
-              description: "Hook event",
+        // ── foundry_add_tool ──────────────────────────────────────────────────
+        {
+          name: "foundry_add_tool",
+          label: "Add Tool",
+          description: "Add a new tool to an existing extension",
+          parameters: {
+            type: "object" as const,
+            properties: {
+              extensionId: {
+                type: "string" as const,
+                description: "Extension to add tool to",
+              },
+              name: {
+                type: "string" as const,
+                description: "Tool name (snake_case)",
+              },
+              label: { type: "string" as const, description: "Display label" },
+              description: {
+                type: "string" as const,
+                description: "What the tool does",
+              },
+              properties: {
+                type: "object" as const,
+                description: "Input properties",
+              },
+              required: {
+                type: "array" as const,
+                items: { type: "string" as const },
+              },
+              code: {
+                type: "string" as const,
+                description: "Execute function body",
+              },
             },
-            code: { type: "string" as const, description: "Handler function body" },
+            required: ["extensionId", "name", "description", "code"],
           },
-          required: ["extensionId", "event", "code"],
-        },
-        async execute(_toolCallId: string, params: unknown) {
-          const p = params as any;
+          async execute(_toolCallId: string, params: unknown) {
+            const p = params as any;
 
-          const success = writer.addHook(p.extensionId, {
-            event: p.event,
-            code: p.code,
-          });
+            const success = writer.addTool(p.extensionId, {
+              name: p.name,
+              label: p.label,
+              description: p.description,
+              properties: p.properties || {},
+              required: p.required || [],
+              code: p.code,
+            });
 
-          if (!success) {
-            return { content: [{ type: "text", text: `Extension "${p.extensionId}" not found.` }] };
-          }
+            if (!success) {
+              return {
+                content: [
+                  {
+                    type: "text",
+                    text: `Extension "${p.extensionId}" not found.`,
+                  },
+                ],
+              };
+            }
 
-          return {
-            content: [{
-              type: "text",
-              text: `Added **${p.event}** hook to **${p.extensionId}**.\n\nRestart gateway to load.`,
-            }],
-          };
-        },
-      },
-
-      // ── foundry_list ──────────────────────────────────────────────────────
-      {
-        name: "foundry_list",
-        label: "List Written Code",
-        description: "List all extensions and skills written by foundry",
-        parameters: {
-          type: "object" as const,
-          properties: {
-            showCode: { type: "boolean" as const, description: "Show generated code" },
+            return {
+              content: [
+                {
+                  type: "text",
+                  text: `Added tool **${p.name}** to **${p.extensionId}**.\n\nRestart gateway to load.`,
+                },
+              ],
+            };
           },
-          required: [] as string[],
         },
-        async execute(_toolCallId: string, params: unknown) {
-          const p = params as { showCode?: boolean };
-          const extensions = writer.getExtensions();
-          const skills = writer.getSkills();
 
-          let output = `## Foundry: Written Code\n\n`;
+        // ── foundry_add_hook ──────────────────────────────────────────────────
+        {
+          name: "foundry_add_hook",
+          label: "Add Hook",
+          description: "Add a new hook to an existing extension",
+          parameters: {
+            type: "object" as const,
+            properties: {
+              extensionId: {
+                type: "string" as const,
+                description: "Extension to add hook to",
+              },
+              event: {
+                type: "string" as const,
+                enum: [
+                  "before_agent_start",
+                  "after_tool_call",
+                  "before_tool_call",
+                  "agent_end",
+                ],
+                description: "Hook event",
+              },
+              code: {
+                type: "string" as const,
+                description: "Handler function body",
+              },
+            },
+            required: ["extensionId", "event", "code"],
+          },
+          async execute(_toolCallId: string, params: unknown) {
+            const p = params as any;
 
-          output += `### Extensions (${extensions.length})\n\n`;
-          for (const ext of extensions) {
-            output += `**${ext.name}** (\`${ext.id}\`)\n`;
-            output += `- Tools: ${ext.tools.map(t => t.name).join(", ") || "none"}\n`;
-            output += `- Hooks: ${ext.hooks.map(h => h.event).join(", ") || "none"}\n`;
-            output += `- Created: ${ext.createdAt}\n\n`;
+            const success = writer.addHook(p.extensionId, {
+              event: p.event,
+              code: p.code,
+            });
 
-            if (p.showCode) {
-              const codePath = join(homedir(), ".openclaw", "extensions", ext.id, "index.ts");
-              if (existsSync(codePath)) {
-                output += "```typescript\n" + readFileSync(codePath, "utf-8").slice(0, 2000) + "\n```\n\n";
+            if (!success) {
+              return {
+                content: [
+                  {
+                    type: "text",
+                    text: `Extension "${p.extensionId}" not found.`,
+                  },
+                ],
+              };
+            }
+
+            return {
+              content: [
+                {
+                  type: "text",
+                  text: `Added **${p.event}** hook to **${p.extensionId}**.\n\nRestart gateway to load.`,
+                },
+              ],
+            };
+          },
+        },
+
+        // ── foundry_list ──────────────────────────────────────────────────────
+        {
+          name: "foundry_list",
+          label: "List Written Code",
+          description: "List all extensions and skills written by foundry",
+          parameters: {
+            type: "object" as const,
+            properties: {
+              showCode: {
+                type: "boolean" as const,
+                description: "Show generated code",
+              },
+            },
+            required: [] as string[],
+          },
+          async execute(_toolCallId: string, params: unknown) {
+            const p = params as { showCode?: boolean };
+            const extensions = writer.getExtensions();
+            const skills = writer.getSkills();
+
+            let output = `## Foundry: Written Code\n\n`;
+
+            output += `### Extensions (${extensions.length})\n\n`;
+            for (const ext of extensions) {
+              output += `**${ext.name}** (\`${ext.id}\`)\n`;
+              output += `- Tools: ${ext.tools.map((t) => t.name).join(", ") || "none"}\n`;
+              output += `- Hooks: ${ext.hooks.map((h) => h.event).join(", ") || "none"}\n`;
+              output += `- Created: ${ext.createdAt}\n\n`;
+
+              if (p.showCode) {
+                const codePath = join(
+                  homedir(),
+                  ".openclaw",
+                  "extensions",
+                  ext.id,
+                  "index.ts",
+                );
+                if (existsSync(codePath)) {
+                  output +=
+                    "```typescript\n" +
+                    readFileSync(codePath, "utf-8").slice(0, 2000) +
+                    "\n```\n\n";
+                }
               }
             }
-          }
 
-          output += `### Skills (${skills.length})\n\n`;
-          for (const skill of skills) {
-            output += `**${skill.name}**\n`;
-            if (skill.baseUrl) {
-              output += `- Base URL: \`${skill.baseUrl}\`\n`;
-              output += `- Endpoints: ${skill.endpoints?.length ?? 0}\n`;
+            output += `### Skills (${skills.length})\n\n`;
+            for (const skill of skills) {
+              output += `**${skill.name}**\n`;
+              if (skill.baseUrl) {
+                output += `- Base URL: \`${skill.baseUrl}\`\n`;
+                output += `- Endpoints: ${skill.endpoints?.length ?? 0}\n`;
+              }
+              output += `- Created: ${skill.createdAt}\n\n`;
             }
-            output += `- Created: ${skill.createdAt}\n\n`;
-          }
 
-          if (extensions.length === 0 && skills.length === 0) {
-            output += "No code written yet. Use `foundry_implement` to get started.\n";
-          }
+            if (extensions.length === 0 && skills.length === 0) {
+              output +=
+                "No code written yet. Use `foundry_implement` to get started.\n";
+            }
 
-          return { content: [{ type: "text", text: output }] };
-        },
-      },
-
-      // ── foundry_docs ──────────────────────────────────────────────────────
-      {
-        name: "foundry_docs",
-        label: "Read OpenClaw Docs",
-        description: "Read OpenClaw plugin/hooks documentation for writing extensions",
-        parameters: {
-          type: "object" as const,
-          properties: {
-            section: {
-              type: "string" as const,
-              enum: ["plugin", "hooks", "both"],
-              description: "Which docs to show",
-            },
+            return { content: [{ type: "text", text: output }] };
           },
-          required: [] as string[],
         },
-        async execute(_toolCallId: string, params: unknown) {
-          const p = params as { section?: string };
-          const docs = writer.getDocs();
-          const section = p.section || "both";
 
-          let output = `## OpenClaw Extension Docs\n\n`;
-
-          if (!docs.plugin && !docs.hooks) {
-            return { content: [{ type: "text", text: "Could not load OpenClaw docs. Check openclawPath config." }] };
-          }
-
-          if (section === "plugin" || section === "both") {
-            output += `### Plugin API\n\n`;
-            output += docs.plugin ? docs.plugin.slice(0, 8000) + "\n\n[truncated]\n\n" : "Not loaded\n\n";
-          }
-
-          if (section === "hooks" || section === "both") {
-            output += `### Hooks API\n\n`;
-            output += docs.hooks ? docs.hooks.slice(0, 5000) + "\n\n[truncated]\n\n" : "Not loaded\n\n";
-          }
-
-          return { content: [{ type: "text", text: output }] };
-        },
-      },
-
-      // ── foundry_extend_self ───────────────────────────────────────────────
-      {
-        name: "foundry_extend_self",
-        label: "Extend Self",
-        description:
-          "Write new code into the foundry extension itself. Add new tools or modify existing ones. " +
-          "This is true self-modification — the extension rewrites its own source code.",
-        parameters: {
-          type: "object" as const,
-          properties: {
-            action: {
-              type: "string" as const,
-              enum: ["add_tool", "add_code", "read_self"],
-              description: "What to do: add_tool (add a new tool), add_code (inject code), read_self (view current source)",
+        // ── foundry_docs ──────────────────────────────────────────────────────
+        {
+          name: "foundry_docs",
+          label: "Read OpenClaw Docs",
+          description:
+            "Read OpenClaw plugin/hooks documentation for writing extensions",
+          parameters: {
+            type: "object" as const,
+            properties: {
+              section: {
+                type: "string" as const,
+                enum: ["plugin", "hooks", "both"],
+                description: "Which docs to show",
+              },
             },
-            toolName: {
-              type: "string" as const,
-              description: "For add_tool: name of the new tool (snake_case)",
-            },
-            toolLabel: {
-              type: "string" as const,
-              description: "For add_tool: display label",
-            },
-            toolDescription: {
-              type: "string" as const,
-              description: "For add_tool: what the tool does",
-            },
-            toolParameters: {
-              type: "object" as const,
-              description: "For add_tool: parameter schema",
-            },
-            toolCode: {
-              type: "string" as const,
-              description: "For add_tool/add_code: the code to add",
-            },
-            insertAfter: {
-              type: "string" as const,
-              description: "For add_code: marker text to insert after",
-            },
+            required: [] as string[],
           },
-          required: ["action"],
+          async execute(_toolCallId: string, params: unknown) {
+            const p = params as { section?: string };
+            const docs = writer.getDocs();
+            const section = p.section || "both";
+
+            let output = `## OpenClaw Extension Docs\n\n`;
+
+            if (!docs.plugin && !docs.hooks) {
+              return {
+                content: [
+                  {
+                    type: "text",
+                    text: "Could not load OpenClaw docs. Check openclawPath config.",
+                  },
+                ],
+              };
+            }
+
+            if (section === "plugin" || section === "both") {
+              output += `### Plugin API\n\n`;
+              output += docs.plugin
+                ? docs.plugin.slice(0, 8000) + "\n\n[truncated]\n\n"
+                : "Not loaded\n\n";
+            }
+
+            if (section === "hooks" || section === "both") {
+              output += `### Hooks API\n\n`;
+              output += docs.hooks
+                ? docs.hooks.slice(0, 5000) + "\n\n[truncated]\n\n"
+                : "Not loaded\n\n";
+            }
+
+            return { content: [{ type: "text", text: output }] };
+          },
         },
-        async execute(_toolCallId: string, params: unknown) {
-          const p = params as any;
-          const selfPath = join(__dirname, "index.ts");
 
-          // Check if we can find ourselves
-          if (!existsSync(selfPath)) {
-            // Try alternate path
-            const altPath = "/Users/lekt9/Projects/aiko/extensions/foundry/index.ts";
-            if (!existsSync(altPath)) {
-              return { content: [{ type: "text", text: `Cannot find self at ${selfPath} or ${altPath}` }] };
+        // ── foundry_extend_self ───────────────────────────────────────────────
+        {
+          name: "foundry_extend_self",
+          label: "Extend Self",
+          description:
+            "Write new code into the foundry extension itself. Add new tools or modify existing ones. " +
+            "This is true self-modification — the extension rewrites its own source code.",
+          parameters: {
+            type: "object" as const,
+            properties: {
+              action: {
+                type: "string" as const,
+                enum: ["add_tool", "add_code", "read_self"],
+                description:
+                  "What to do: add_tool (add a new tool), add_code (inject code), read_self (view current source)",
+              },
+              toolName: {
+                type: "string" as const,
+                description: "For add_tool: name of the new tool (snake_case)",
+              },
+              toolLabel: {
+                type: "string" as const,
+                description: "For add_tool: display label",
+              },
+              toolDescription: {
+                type: "string" as const,
+                description: "For add_tool: what the tool does",
+              },
+              toolParameters: {
+                type: "object" as const,
+                description: "For add_tool: parameter schema",
+              },
+              toolCode: {
+                type: "string" as const,
+                description: "For add_tool/add_code: the code to add",
+              },
+              insertAfter: {
+                type: "string" as const,
+                description: "For add_code: marker text to insert after",
+              },
+            },
+            required: ["action"],
+          },
+          async execute(_toolCallId: string, params: unknown) {
+            const p = params as any;
+            const selfPath = join(__dirname, "index.ts");
+
+            // Check if we can find ourselves
+            if (!existsSync(selfPath)) {
+              // Try alternate path
+              const altPath =
+                "/Users/lekt9/Projects/aiko/extensions/foundry/index.ts";
+              if (!existsSync(altPath)) {
+                return {
+                  content: [
+                    {
+                      type: "text",
+                      text: `Cannot find self at ${selfPath} or ${altPath}`,
+                    },
+                  ],
+                };
+              }
             }
-          }
 
-          const actualPath = existsSync(selfPath) ? selfPath : "/Users/lekt9/Projects/aiko/extensions/foundry/index.ts";
+            const actualPath = existsSync(selfPath)
+              ? selfPath
+              : "/Users/lekt9/Projects/aiko/extensions/foundry/index.ts";
 
-          if (p.action === "read_self") {
-            const content = readFileSync(actualPath, "utf-8");
-            return { content: [{ type: "text", text: `## Self Source (${actualPath})\n\n\`\`\`typescript\n${content.slice(0, 10000)}\n\`\`\`\n\n[${content.length} chars total]` }] };
-          }
-
-          if (p.action === "add_tool") {
-            if (!p.toolName || !p.toolDescription || !p.toolCode) {
-              return { content: [{ type: "text", text: "Missing required: toolName, toolDescription, toolCode" }] };
+            if (p.action === "read_self") {
+              const content = readFileSync(actualPath, "utf-8");
+              return {
+                content: [
+                  {
+                    type: "text",
+                    text: `## Self Source (${actualPath})\n\n\`\`\`typescript\n${content.slice(0, 10000)}\n\`\`\`\n\n[${content.length} chars total]`,
+                  },
+                ],
+              };
             }
 
-            let content = readFileSync(actualPath, "utf-8");
+            if (p.action === "add_tool") {
+              if (!p.toolName || !p.toolDescription || !p.toolCode) {
+                return {
+                  content: [
+                    {
+                      type: "text",
+                      text: "Missing required: toolName, toolDescription, toolCode",
+                    },
+                  ],
+                };
+              }
 
-            // Build the new tool
-            const newTool = `
+              let content = readFileSync(actualPath, "utf-8");
+
+              // Build the new tool
+              const newTool = `
       // ── ${p.toolName} (self-written) ─────────────────────────────────────
       {
         name: "${p.toolName}",
         label: "${p.toolLabel || p.toolName}",
         description: "${p.toolDescription.replace(/"/g, '\\"')}",
-        parameters: ${JSON.stringify(p.toolParameters || { type: "object", properties: {}, required: [] }, null, 10).replace(/^/gm, "        ").trim()},
+        parameters: ${JSON.stringify(
+          p.toolParameters || { type: "object", properties: {}, required: [] },
+          null,
+          10,
+        )
+          .replace(/^/gm, "        ")
+          .trim()},
         async execute(_toolCallId: string, params: unknown) {
           const p = params as any;
-${p.toolCode.split("\n").map((l: string) => "          " + l).join("\n")}
+${p.toolCode
+  .split("\n")
+  .map((l: string) => "          " + l)
+  .join("\n")}
         },
       },`;
 
-            // Find the end of the tools array (before the closing ];)
-            const toolsArrayEnd = content.lastIndexOf("    ];\n\n    const toolNames = [");
-            if (toolsArrayEnd === -1) {
-              return { content: [{ type: "text", text: "Could not find tools array end marker" }] };
-            }
-
-            // Insert the new tool before the ];
-            content = content.slice(0, toolsArrayEnd) + newTool + "\n" + content.slice(toolsArrayEnd);
-
-            // Also add to toolNames
-            const toolNamesMatch = content.match(/const toolNames = \[\n([\s\S]*?)\n    \];/);
-            if (toolNamesMatch) {
-              const oldToolNames = toolNamesMatch[0];
-              const newToolNames = oldToolNames.replace(
-                /\n    \];/,
-                `\n      "${p.toolName}",\n    ];`
+              // Find the end of the tools array (before the closing ];)
+              const toolsArrayEnd = content.lastIndexOf(
+                "    ];\n\n    const toolNames = [",
               );
-              content = content.replace(oldToolNames, newToolNames);
-            }
-
-            writeFileSync(actualPath, content);
-
-            return {
-              content: [{
-                type: "text",
-                text: `## Self-Modified\n\n` +
-                  `Added tool **${p.toolName}** to foundry extension.\n\n` +
-                  `- Location: ${actualPath}\n` +
-                  `- Lines added: ~${newTool.split("\n").length}\n\n` +
-                  `**Restart gateway to load the new tool.**`,
-              }],
-            };
-          }
-
-          if (p.action === "add_code") {
-            if (!p.toolCode || !p.insertAfter) {
-              return { content: [{ type: "text", text: "Missing required: toolCode, insertAfter" }] };
-            }
-
-            let content = readFileSync(actualPath, "utf-8");
-            const insertPos = content.indexOf(p.insertAfter);
-
-            if (insertPos === -1) {
-              return { content: [{ type: "text", text: `Could not find marker: "${p.insertAfter.slice(0, 50)}..."` }] };
-            }
-
-            content = content.slice(0, insertPos + p.insertAfter.length) + "\n" + p.toolCode + content.slice(insertPos + p.insertAfter.length);
-            writeFileSync(actualPath, content);
-
-            return {
-              content: [{
-                type: "text",
-                text: `## Self-Modified\n\n` +
-                  `Inserted code after marker.\n\n` +
-                  `**Restart gateway to load changes.**`,
-              }],
-            };
-          }
-
-          return { content: [{ type: "text", text: `Unknown action: ${p.action}` }] };
-        },
-      },
-
-      // ── foundry_restart ────────────────────────────────────────────────────
-      {
-        name: "foundry_restart",
-        label: "Restart with Resume",
-        description:
-          "Restart the gateway to load new code, while saving the current conversation context " +
-          "so the agent can automatically resume after restart. Use this after writing new extensions.",
-        parameters: {
-          type: "object" as const,
-          properties: {
-            reason: {
-              type: "string" as const,
-              description: "Why we're restarting (e.g., 'load new oauth-refresh extension')",
-            },
-            resumeContext: {
-              type: "string" as const,
-              description: "Context to resume with after restart (what we were doing)",
-            },
-            lastMessage: {
-              type: "string" as const,
-              description: "The user's last message/request to continue after restart",
-            },
-          },
-          required: ["reason", "resumeContext"],
-        },
-        async execute(_toolCallId: string, params: unknown) {
-          const p = params as { reason: string; resumeContext: string; lastMessage?: string };
-          const { exec } = require("node:child_process");
-
-          // Save pending session for resume
-          learningEngine.savePendingSession({
-            agentId: "current", // Will be replaced with actual ID if available
-            lastMessage: p.lastMessage || "Continue from where we left off",
-            context: p.resumeContext,
-            reason: p.reason,
-          });
-
-          // Schedule restart after returning
-          setTimeout(() => {
-            exec("openclaw gateway restart", (error: any) => {
-              if (error) {
-                logger.error?.(`[foundry] Restart failed: ${error.message}`);
-              }
-            });
-          }, 500);
-
-          return {
-            content: [{
-              type: "text",
-              text: `## Gateway Restart Scheduled\n\n` +
-                `**Reason**: ${p.reason}\n\n` +
-                `Session context saved. The conversation will automatically resume after restart.\n\n` +
-                `Restarting in 500ms...`,
-            }],
-          };
-        },
-      },
-
-      // ── foundry_learnings ──────────────────────────────────────────────────
-      {
-        name: "foundry_learnings",
-        label: "View Learnings",
-        description: "View what foundry has learned from successes, failures, and patterns",
-        parameters: {
-          type: "object" as const,
-          properties: {
-            type: {
-              type: "string" as const,
-              enum: ["all", "patterns", "failures", "insights"],
-              description: "What type of learnings to show",
-            },
-            tool: {
-              type: "string" as const,
-              description: "Filter by tool name",
-            },
-          },
-          required: [] as string[],
-        },
-        async execute(_toolCallId: string, params: unknown) {
-          const p = params as { type?: string; tool?: string };
-          const filterType = p.type || "all";
-
-          let entries: LearningEntry[] = [];
-          if (filterType === "patterns") entries = learningEngine.getPatterns();
-          else if (filterType === "failures") entries = learningEngine.getRecentFailures(10);
-          else if (filterType === "insights") entries = learningEngine.getInsights();
-          else entries = learningEngine.findRelevantLearnings(p.tool);
-
-          let output = `## Foundry: Learnings\n\n`;
-          output += `**Summary**: ${learningEngine.getLearningsSummary()}\n\n`;
-
-          if (entries.length === 0) {
-            output += "No learnings found for this filter.\n";
-          } else {
-            for (const entry of entries) {
-              output += `### ${entry.type.toUpperCase()}: ${entry.tool || "general"}\n`;
-              if (entry.error) output += `- **Error**: ${entry.error.slice(0, 100)}...\n`;
-              if (entry.resolution) output += `- **Resolution**: ${entry.resolution}\n`;
-              if (entry.context) output += `- **Context**: ${entry.context.slice(0, 200)}...\n`;
-              output += `- **When**: ${entry.timestamp}\n\n`;
-            }
-          }
-
-          return { content: [{ type: "text", text: output }] };
-        },
-      },
-      // ── foundry_publish_ability ─────────────────────────────────────────
-      {
-        name: "foundry_publish_ability",
-        label: "Publish to Brain Marketplace",
-        description:
-          "Publish a pattern, extension, technique, insight, or agent design to the brain marketplace. " +
-          "Patterns are free to share (crowdsourced learning), other abilities earn USDC. " +
-          "Requires a creator wallet (set up via unbrowse_wallet).",
-        parameters: {
-          type: "object" as const,
-          properties: {
-            type: {
-              type: "string" as const,
-              enum: ["pattern", "extension", "technique", "insight", "agent"],
-              description: "Type of ability to publish",
-            },
-            name: {
-              type: "string" as const,
-              description: "Name/title for the ability",
-            },
-            description: {
-              type: "string" as const,
-              description: "Description of what this ability does",
-            },
-            content: {
-              type: "object" as const,
-              description: "The ability content (varies by type)",
-            },
-            patternId: {
-              type: "string" as const,
-              description: "ID of an existing pattern to publish (for type=pattern)",
-            },
-          },
-          required: ["type", "name"],
-        },
-        async execute(_toolCallId: string, params: unknown) {
-          const p = params as {
-            type: string;
-            name: string;
-            description?: string;
-            content?: any;
-            patternId?: string;
-          };
-
-          // Get creator wallet from config
-          const configPath = join(homedir(), ".openclaw", "openclaw.json");
-          let creatorWallet: string | null = null;
-          try {
-            const config = JSON.parse(readFileSync(configPath, "utf-8"));
-            creatorWallet = config?.plugins?.entries?.unbrowse?.config?.creatorWallet;
-          } catch {}
-
-          if (!creatorWallet) {
-            return {
-              content: [{
-                type: "text",
-                text: "No creator wallet configured. Use unbrowse_wallet to set up a wallet first.",
-              }],
-            };
-          }
-
-          // Get skill index URL from config
-          let skillIndexUrl = "https://api.forge.getfoundry.app";
-          try {
-            const config = JSON.parse(readFileSync(configPath, "utf-8"));
-            skillIndexUrl = config?.plugins?.entries?.unbrowse?.config?.skillIndexUrl ?? skillIndexUrl;
-          } catch {}
-
-          let content = p.content;
-
-          // For patterns, look up from learnings
-          if (p.type === "pattern" && p.patternId) {
-            const patterns = learningEngine.getPatterns();
-            const pattern = patterns.find(pat => pat.id === p.patternId);
-            if (!pattern) {
-              return { content: [{ type: "text", text: `Pattern not found: ${p.patternId}` }] };
-            }
-            content = {
-              errorPattern: pattern.error || "",
-              resolution: pattern.resolution || "",
-              tool: pattern.tool,
-              context: pattern.context,
-              useCount: pattern.useCount || 1,
-            };
-          }
-
-          if (!content) {
-            return { content: [{ type: "text", text: "Provide content or patternId for the ability." }] };
-          }
-
-          try {
-            const resp = await fetch(`${skillIndexUrl}/skills/publish`, {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                abilityType: p.type,
-                service: p.name,
-                content,
-                creatorWallet,
-                baseUrl: "",
-                authMethodType: "none",
-                endpoints: [],
-                skillMd: p.description || "",
-                apiTemplate: "",
-              }),
-              signal: AbortSignal.timeout(30_000),
-            });
-
-            if (!resp.ok) {
-              const text = await resp.text();
-              return { content: [{ type: "text", text: `Publish failed: ${text}` }] };
-            }
-
-            const result = await resp.json() as { id: string; slug: string; version: number; reviewStatus: string };
-
-            return {
-              content: [{
-                type: "text",
-                text: [
-                  `Published ${p.type}: ${p.name}`,
-                  ``,
-                  `ID: ${result.id}`,
-                  `Version: ${result.version}`,
-                  `Status: ${result.reviewStatus}`,
-                  ``,
-                  p.type === "pattern"
-                    ? "Patterns are free to share — thanks for contributing to the brain!"
-                    : `Others can download this ${p.type} via foundry_marketplace. You earn USDC per download.`,
-                ].join("\n"),
-              }],
-            };
-          } catch (err) {
-            return { content: [{ type: "text", text: `Publish error: ${(err as Error).message}` }] };
-          }
-        },
-      },
-
-      // ── Foundry Marketplace Tool ───────────────────────────────────────────
-      // Search and install abilities from the crowdsourced marketplace
-      {
-        name: "foundry_marketplace",
-        label: "Foundry Marketplace",
-        description:
-          "Search and install abilities from the Foundry marketplace. " +
-          "Abilities include skills (APIs), patterns (failure resolutions), extensions (plugins), " +
-          "techniques (code snippets), insights (approaches), and agent designs. " +
-          "Use action='search' with query, action='leaderboard' to see top abilities, " +
-          "or action='install' with id to download (costs vary by type).",
-        parameters: {
-          type: "object" as const,
-          properties: {
-            action: {
-              type: "string" as const,
-              enum: ["search", "leaderboard", "install"],
-              description: "Action to perform",
-            },
-            query: {
-              type: "string" as const,
-              description: "Search query (for action='search')",
-            },
-            type: {
-              type: "string" as const,
-              enum: ["skill", "pattern", "extension", "technique", "insight", "agent"],
-              description: "Filter by ability type",
-            },
-            id: {
-              type: "string" as const,
-              description: "Ability ID to install (for action='install')",
-            },
-            limit: {
-              type: "number" as const,
-              description: "Number of results (default: 10)",
-            },
-          },
-          required: ["action"],
-        },
-        async execute(_toolCallId: string, params: unknown) {
-          const p = params as { action: string; query?: string; type?: string; id?: string; limit?: number };
-
-          // Get config for marketplace
-          const configPath = join(homedir(), ".openclaw", "openclaw.json");
-          let skillIndexUrl = "https://api.forge.getfoundry.app";
-          let solanaPrivateKey: string | undefined;
-          try {
-            const config = JSON.parse(readFileSync(configPath, "utf-8"));
-            skillIndexUrl = config?.plugins?.entries?.unbrowse?.config?.skillIndexUrl ?? skillIndexUrl;
-            const walletPath = config?.plugins?.entries?.unbrowse?.config?.solanaWalletPath;
-            if (walletPath && existsSync(walletPath)) {
-              const walletData = JSON.parse(readFileSync(walletPath, "utf-8"));
-              solanaPrivateKey = walletData.privateKey;
-            }
-          } catch {}
-
-          // Lazy-load brain client
-          const { BrainIndexClient } = await import("./src/brain-index.js");
-          const brainClient = new BrainIndexClient({ indexUrl: skillIndexUrl, solanaPrivateKey });
-
-          try {
-            if (p.action === "leaderboard") {
-              const result = await brainClient.getLeaderboard({
-                type: p.type as any,
-                limit: p.limit ?? 20,
-              });
-
-              if (result.abilities.length === 0) {
-                return { content: [{ type: "text", text: "No abilities in leaderboard yet. Be the first to publish!" }] };
-              }
-
-              const lines = [
-                `## Foundry Marketplace Leaderboard`,
-                ``,
-                `Showing top ${result.abilities.length} abilities by rank score:`,
-                ``,
-              ];
-
-              for (const ability of result.abilities) {
-                const price = ability.priceCents === 0 ? "FREE" : `$${(ability.priceCents / 100).toFixed(2)}`;
-                lines.push(
-                  `**${ability.service}** (${ability.abilityType})`,
-                  `  ID: ${ability.id} | Payers: ${ability.uniquePayers} | Score: ${ability.rankScore} | ${price}`,
-                  ``,
-                );
-              }
-
-              lines.push(`Use foundry_marketplace with action="install" and id="<id>" to download.`);
-              return { content: [{ type: "text", text: lines.join("\n") }] };
-            }
-
-            if (p.action === "search") {
-              if (!p.query) {
-                return { content: [{ type: "text", text: "Provide a query for search." }] };
-              }
-
-              const result = await brainClient.searchAbilities(p.query, {
-                type: p.type as any,
-                limit: p.limit ?? 10,
-              });
-
-              if (result.skills.length === 0) {
-                return { content: [{ type: "text", text: `No abilities found for: ${p.query}` }] };
-              }
-
-              const lines = [
-                `## Search Results: "${p.query}"`,
-                ``,
-                `Found ${result.total} abilities:`,
-                ``,
-              ];
-
-              for (const ability of result.skills) {
-                const price = ability.priceCents === 0 ? "FREE" : `$${(ability.priceCents / 100).toFixed(2)}`;
-                lines.push(
-                  `**${ability.service}** (${ability.abilityType})`,
-                  `  ID: ${ability.id} | Downloads: ${ability.downloadCount} | ${price}`,
-                  ``,
-                );
-              }
-
-              lines.push(`Use foundry_marketplace with action="install" and id="<id>" to download.`);
-              return { content: [{ type: "text", text: lines.join("\n") }] };
-            }
-
-            if (p.action === "install") {
-              if (!p.id) {
-                return { content: [{ type: "text", text: "Provide an id to install." }] };
-              }
-
-              const ability = await brainClient.downloadAbility(p.id);
-
-              // Handle different ability types
-              const abilityType = (ability as any).abilityType || (ability as any).type || "skill";
-
-              if (abilityType === "pattern") {
-                // Record pattern in learning engine
-                const content = (ability as any).content;
-                if (content?.errorPattern && content?.resolution) {
-                  const patternId = learningEngine.recordFailure("imported", content.errorPattern, content.context);
-                  learningEngine.recordResolution(patternId, content.resolution);
-                  return {
-                    content: [{
+              if (toolsArrayEnd === -1) {
+                return {
+                  content: [
+                    {
                       type: "text",
-                      text: [
-                        `Installed pattern: ${(ability as any).service}`,
-                        ``,
-                        `Error: ${content.errorPattern}`,
-                        `Resolution: ${content.resolution}`,
-                        ``,
-                        `Pattern recorded — will be suggested when similar errors occur.`,
-                      ].join("\n"),
-                    }],
-                  };
-                }
+                      text: "Could not find tools array end marker",
+                    },
+                  ],
+                };
               }
 
-              if (abilityType === "extension") {
-                // Write extension to extensions directory
-                const content = (ability as any).content;
-                if (content?.code) {
-                  const extId = (ability as any).service?.toLowerCase().replace(/[^a-z0-9]+/g, "-") || "imported-ext";
-                  const result = await writer.writeExtension({
-                    id: extId,
-                    name: (ability as any).service,
-                    description: content.description || "",
-                    tools: [],
-                    hooks: [],
-                  });
+              // Insert the new tool before the ];
+              content =
+                content.slice(0, toolsArrayEnd) +
+                newTool +
+                "\n" +
+                content.slice(toolsArrayEnd);
 
-                  return {
-                    content: [{
-                      type: "text",
-                      text: [
-                        `Installed extension: ${(ability as any).service}`,
-                        ``,
-                        `Path: ${result.path}`,
-                        ``,
-                        `Run foundry_restart to load the new extension.`,
-                      ].join("\n"),
-                    }],
-                  };
-                }
+              // Also add to toolNames
+              const toolNamesMatch = content.match(
+                /const toolNames = \[\n([\s\S]*?)\n    \];/,
+              );
+              if (toolNamesMatch) {
+                const oldToolNames = toolNamesMatch[0];
+                const newToolNames = oldToolNames.replace(
+                  /\n    \];/,
+                  `\n      "${p.toolName}",\n    ];`,
+                );
+                content = content.replace(oldToolNames, newToolNames);
               }
 
-              // Default: return raw ability info
+              writeFileSync(actualPath, content);
+
               return {
-                content: [{
-                  type: "text",
-                  text: [
-                    `Downloaded: ${(ability as any).service || p.id}`,
-                    `Type: ${abilityType}`,
-                    ``,
-                    `Content:`,
-                    JSON.stringify((ability as any).content || ability, null, 2).slice(0, 2000),
-                  ].join("\n"),
-                }],
+                content: [
+                  {
+                    type: "text",
+                    text:
+                      `## Self-Modified\n\n` +
+                      `Added tool **${p.toolName}** to foundry extension.\n\n` +
+                      `- Location: ${actualPath}\n` +
+                      `- Lines added: ~${newTool.split("\n").length}\n\n` +
+                      `**Restart gateway to load the new tool.**`,
+                  },
+                ],
               };
             }
 
-            return { content: [{ type: "text", text: `Unknown action: ${p.action}. Use search, leaderboard, or install.` }] };
-          } catch (err) {
-            return { content: [{ type: "text", text: `Marketplace error: ${(err as Error).message}` }] };
-          }
-        },
-      },
+            if (p.action === "add_code") {
+              if (!p.toolCode || !p.insertAfter) {
+                return {
+                  content: [
+                    {
+                      type: "text",
+                      text: "Missing required: toolCode, insertAfter",
+                    },
+                  ],
+                };
+              }
 
-      // ── foundry_overseer ────────────────────────────────────────────────────
-      // Self-Improving Coding Agent (arXiv:2504.15228): Autonomous overseer
-      {
-        name: "foundry_overseer",
-        label: "Run Overseer",
-        description:
-          "Run the autonomous overseer to analyze patterns, identify crystallization candidates, " +
-          "find recurring failures, and get self-improvement recommendations.",
-        parameters: {
-          type: "object" as const,
-          properties: {},
-          required: [] as string[],
-        },
-        async execute() {
-          const report = learningEngine.runOverseer(dataDir);
-          const metrics = learningEngine.getAllToolMetrics();
+              let content = readFileSync(actualPath, "utf-8");
+              const insertPos = content.indexOf(p.insertAfter);
 
-          let output = `## Foundry Overseer Report\n\n`;
-          output += `**Generated**: ${report.timestamp}\n`;
-          output += `**Patterns analyzed**: ${report.patternsAnalyzed}\n\n`;
+              if (insertPos === -1) {
+                return {
+                  content: [
+                    {
+                      type: "text",
+                      text: `Could not find marker: "${p.insertAfter.slice(0, 50)}..."`,
+                    },
+                  ],
+                };
+              }
 
-          // Tool fitness (ADAS)
-          if (metrics.length > 0) {
-            output += `### Tool Fitness (ADAS)\n`;
-            const sorted = metrics.sort((a, b) => b.fitness - a.fitness);
-            for (const m of sorted.slice(0, 10)) {
-              const bar = "█".repeat(Math.floor(m.fitness * 10)) + "░".repeat(10 - Math.floor(m.fitness * 10));
-              output += `- **${m.toolName}**: ${bar} ${(m.fitness * 100).toFixed(0)}% (${m.successCount}/${m.successCount + m.failureCount})\n`;
+              content =
+                content.slice(0, insertPos + p.insertAfter.length) +
+                "\n" +
+                p.toolCode +
+                content.slice(insertPos + p.insertAfter.length);
+              writeFileSync(actualPath, content);
+
+              return {
+                content: [
+                  {
+                    type: "text",
+                    text:
+                      `## Self-Modified\n\n` +
+                      `Inserted code after marker.\n\n` +
+                      `**Restart gateway to load changes.**`,
+                  },
+                ],
+              };
             }
-            output += `\n`;
-          }
 
-          // Crystallization candidates (HexMachina)
-          if (report.crystallizationCandidates.length > 0) {
-            output += `### Crystallization Candidates (HexMachina)\n`;
-            output += `Patterns ready to become executable hooks:\n\n`;
-            for (const c of report.crystallizationCandidates) {
-              output += `- **${c.tool}**: "${c.error?.slice(0, 50)}..." (used ${c.useCount}x)\n`;
-              output += `  → \`foundry_crystallize patternId="${c.id}"\`\n`;
-            }
-            output += `\n`;
-          }
-
-          // Recurring failures
-          if (report.recurringFailures.length > 0) {
-            output += `### Recurring Failures (Need Attention)\n`;
-            for (const f of report.recurringFailures) {
-              output += `- **${f.signature}**: ${f.count} occurrences\n`;
-            }
-            output += `\n`;
-          }
-
-          // Actions taken (autonomous behavior)
-          if (report.actionsExecuted.length > 0) {
-            output += `### Actions Executed\n`;
-            for (const action of report.actionsExecuted) {
-              output += `- ${action}\n`;
-            }
-            output += `\n`;
-          }
-
-          if (report.crystallizationCandidates.length === 0 && report.recurringFailures.length === 0 && report.actionsExecuted.length === 0) {
-            output += `No immediate actions needed.\n`;
-          }
-
-          return { content: [{ type: "text", text: output }] };
-        },
-      },
-
-      // ── foundry_crystallize ─────────────────────────────────────────────────
-      // HexMachina (arXiv:2506.04651): LLM-driven crystallization
-      // Returns pattern context and asks LLM to generate hook code
-      {
-        name: "foundry_crystallize",
-        label: "Crystallize Pattern",
-        description:
-          "Start crystallization of a learned pattern. Returns pattern details and instructions " +
-          "for generating hook code. After reviewing, call foundry_save_hook with the generated code.",
-        parameters: {
-          type: "object" as const,
-          properties: {
-            patternId: {
-              type: "string" as const,
-              description: "ID of the pattern to crystallize (from foundry_overseer)",
-            },
+            return {
+              content: [{ type: "text", text: `Unknown action: ${p.action}` }],
+            };
           },
-          required: ["patternId"] as string[],
         },
-        async execute(_toolCallId: string, params: unknown) {
-          const p = params as { patternId: string };
-          const pattern = learningEngine.getPatterns().find(l => l.id === p.patternId);
 
-          if (!pattern) {
-            return { content: [{ type: "text", text: `Pattern not found: ${p.patternId}` }] };
-          }
-          if (!pattern.resolution) {
-            return { content: [{ type: "text", text: `Pattern has no resolution to crystallize` }] };
-          }
-          if (pattern.crystallizedTo) {
-            return { content: [{ type: "text", text: `Already crystallized to: ${pattern.crystallizedTo}` }] };
-          }
-
-          // HexMachina: Return context for LLM to generate the hook
-          let output = `## Crystallize Pattern: ${pattern.id}\n\n`;
-          output += `### Pattern Details\n`;
-          output += `- **Tool**: \`${pattern.tool}\`\n`;
-          output += `- **Error Pattern**: ${pattern.error}\n`;
-          output += `- **Learned Resolution**: ${pattern.resolution}\n`;
-          output += `- **Context**: ${pattern.context || "N/A"}\n`;
-          output += `- **Use Count**: ${pattern.useCount}\n`;
-          output += `- **Success Trajectory**: ${(pattern.improvementTrajectory || []).join(", ") || "N/A"}\n\n`;
-
-          output += `### Generate Hook Code\n\n`;
-          output += `Create a \`before_tool_call\` hook that:\n`;
-          output += `1. Triggers when \`${pattern.tool}\` is about to be called\n`;
-          output += `2. Detects conditions that would lead to: "${pattern.error?.slice(0, 100)}"\n`;
-          output += `3. Applies the resolution proactively: "${pattern.resolution}"\n`;
-          output += `4. Uses \`ctx.injectSystemMessage()\` to guide the LLM\n\n`;
-
-          output += `### Hook Template\n`;
-          output += `\`\`\`typescript\n`;
-          output += `api.on("before_tool_call", async (event, ctx) => {\n`;
-          output += `  if (event.toolName === "${pattern.tool}") {\n`;
-          output += `    // TODO: Add detection logic for the error condition\n`;
-          output += `    // TODO: Apply resolution proactively\n`;
-          output += `    if (ctx?.injectSystemMessage) {\n`;
-          output += `      ctx.injectSystemMessage(\`[CRYSTALLIZED] Apply: ${pattern.resolution?.slice(0, 100)}\`);\n`;
-          output += `    }\n`;
-          output += `  }\n`;
-          output += `});\n`;
-          output += `\`\`\`\n\n`;
-
-          output += `### Next Step\n`;
-          output += `Generate the complete hook code based on the pattern above, then call:\n`;
-          output += `\`\`\`\n`;
-          output += `foundry_save_hook(\n`;
-          output += `  patternId: "${pattern.id}",\n`;
-          output += `  hookCode: "<your generated code>"\n`;
-          output += `)\n`;
-          output += `\`\`\`\n`;
-
-          return { content: [{ type: "text", text: output }] };
-        },
-      },
-
-      // ── foundry_save_hook ──────────────────────────────────────────────────
-      // HexMachina: Save LLM-generated hook code
-      {
-        name: "foundry_save_hook",
-        label: "Save Crystallized Hook",
-        description:
-          "Save the LLM-generated hook code from crystallization. " +
-          "Call this after foundry_crystallize with the generated code.",
-        parameters: {
-          type: "object" as const,
-          properties: {
-            patternId: {
-              type: "string" as const,
-              description: "ID of the pattern being crystallized",
+        // ── foundry_restart ────────────────────────────────────────────────────
+        {
+          name: "foundry_restart",
+          label: "Restart with Resume",
+          description:
+            "Restart the gateway to load new code, while saving the current conversation context " +
+            "so the agent can automatically resume after restart. Use this after writing new extensions.",
+          parameters: {
+            type: "object" as const,
+            properties: {
+              reason: {
+                type: "string" as const,
+                description:
+                  "Why we're restarting (e.g., 'load new oauth-refresh extension')",
+              },
+              resumeContext: {
+                type: "string" as const,
+                description:
+                  "Context to resume with after restart (what we were doing)",
+              },
+              lastMessage: {
+                type: "string" as const,
+                description:
+                  "The user's last message/request to continue after restart",
+              },
             },
-            hookCode: {
-              type: "string" as const,
-              description: "The generated hook code (TypeScript)",
-            },
-            hookName: {
-              type: "string" as const,
-              description: "Optional name for the hook (defaults to pattern-based name)",
-            },
+            required: ["reason", "resumeContext"],
           },
-          required: ["patternId", "hookCode"] as string[],
+          async execute(_toolCallId: string, params: unknown) {
+            const p = params as {
+              reason: string;
+              resumeContext: string;
+              lastMessage?: string;
+            };
+            const { exec } = require("node:child_process");
+
+            // Save pending session for resume
+            learningEngine.savePendingSession({
+              agentId: "current", // Will be replaced with actual ID if available
+              lastMessage: p.lastMessage || "Continue from where we left off",
+              context: p.resumeContext,
+              reason: p.reason,
+            });
+
+            // Schedule restart after returning
+            setTimeout(() => {
+              exec("openclaw gateway restart", (error: any) => {
+                if (error) {
+                  logger.error?.(`[foundry] Restart failed: ${error.message}`);
+                }
+              });
+            }, 500);
+
+            return {
+              content: [
+                {
+                  type: "text",
+                  text:
+                    `## Gateway Restart Scheduled\n\n` +
+                    `**Reason**: ${p.reason}\n\n` +
+                    `Session context saved. The conversation will automatically resume after restart.\n\n` +
+                    `Restarting in 500ms...`,
+                },
+              ],
+            };
+          },
         },
-        async execute(_toolCallId: string, params: unknown) {
-          const p = params as { patternId: string; hookCode: string; hookName?: string };
-          const pattern = learningEngine.getPatterns().find(l => l.id === p.patternId);
 
-          if (!pattern) {
-            return { content: [{ type: "text", text: `Pattern not found: ${p.patternId}` }] };
-          }
-          if (pattern.crystallizedTo) {
-            return { content: [{ type: "text", text: `Already crystallized to: ${pattern.crystallizedTo}` }] };
-          }
+        // ── foundry_learnings ──────────────────────────────────────────────────
+        {
+          name: "foundry_learnings",
+          label: "View Learnings",
+          description:
+            "View what foundry has learned from successes, failures, and patterns",
+          parameters: {
+            type: "object" as const,
+            properties: {
+              type: {
+                type: "string" as const,
+                enum: ["all", "patterns", "failures", "insights"],
+                description: "What type of learnings to show",
+              },
+              tool: {
+                type: "string" as const,
+                description: "Filter by tool name",
+              },
+            },
+            required: [] as string[],
+          },
+          async execute(_toolCallId: string, params: unknown) {
+            const p = params as { type?: string; tool?: string };
+            const filterType = p.type || "all";
 
-          // Validate the hook code has basic structure
-          if (!p.hookCode.includes("api.on") && !p.hookCode.includes("event") && !p.hookCode.includes("ctx")) {
-            return { content: [{ type: "text", text: `Invalid hook code - must include api.on(), event, and ctx` }] };
-          }
+            let entries: LearningEntry[] = [];
+            if (filterType === "patterns")
+              entries = learningEngine.getPatterns();
+            else if (filterType === "failures")
+              entries = learningEngine.getRecentFailures(10);
+            else if (filterType === "insights")
+              entries = learningEngine.getInsights();
+            else entries = learningEngine.findRelevantLearnings(p.tool);
 
-          // Generate hook ID and save
-          const hookId = p.hookName || `crystallized_${pattern.tool}_${Date.now()}`;
-          const hooksDir = join(dataDir, "hooks");
-          if (!existsSync(hooksDir)) mkdirSync(hooksDir, { recursive: true });
+            let output = `## Foundry: Learnings\n\n`;
+            output += `**Summary**: ${learningEngine.getLearningsSummary()}\n\n`;
 
-          const hookPath = join(hooksDir, `${hookId}.ts`);
-          const fullCode = `// HexMachina crystallized from pattern: ${pattern.id}
+            if (entries.length === 0) {
+              output += "No learnings found for this filter.\n";
+            } else {
+              for (const entry of entries) {
+                output += `### ${entry.type.toUpperCase()}: ${entry.tool || "general"}\n`;
+                if (entry.error)
+                  output += `- **Error**: ${entry.error.slice(0, 100)}...\n`;
+                if (entry.resolution)
+                  output += `- **Resolution**: ${entry.resolution}\n`;
+                if (entry.context)
+                  output += `- **Context**: ${entry.context.slice(0, 200)}...\n`;
+                output += `- **When**: ${entry.timestamp}\n\n`;
+              }
+            }
+
+            return { content: [{ type: "text", text: output }] };
+          },
+        },
+        // ── foundry_publish_ability ─────────────────────────────────────────
+        {
+          name: "foundry_publish_ability",
+          label: "Publish to Brain Marketplace",
+          description:
+            "Publish a pattern, extension, technique, insight, or agent design to the brain marketplace. " +
+            "Patterns are free to share (crowdsourced learning), other abilities earn USDC. " +
+            "Requires a creator wallet (set up via unbrowse_wallet).",
+          parameters: {
+            type: "object" as const,
+            properties: {
+              type: {
+                type: "string" as const,
+                enum: ["pattern", "extension", "technique", "insight", "agent"],
+                description: "Type of ability to publish",
+              },
+              name: {
+                type: "string" as const,
+                description: "Name/title for the ability",
+              },
+              description: {
+                type: "string" as const,
+                description: "Description of what this ability does",
+              },
+              content: {
+                type: "object" as const,
+                description: "The ability content (varies by type)",
+              },
+              patternId: {
+                type: "string" as const,
+                description:
+                  "ID of an existing pattern to publish (for type=pattern)",
+              },
+            },
+            required: ["type", "name"],
+          },
+          async execute(_toolCallId: string, params: unknown) {
+            const p = params as {
+              type: string;
+              name: string;
+              description?: string;
+              content?: any;
+              patternId?: string;
+            };
+
+            // Get creator wallet from config
+            const configPath = join(homedir(), ".openclaw", "openclaw.json");
+            let creatorWallet: string | null = null;
+            try {
+              const config = JSON.parse(readFileSync(configPath, "utf-8"));
+              creatorWallet =
+                config?.plugins?.entries?.unbrowse?.config?.creatorWallet;
+            } catch {}
+
+            if (!creatorWallet) {
+              return {
+                content: [
+                  {
+                    type: "text",
+                    text: "No creator wallet configured. Use unbrowse_wallet to set up a wallet first.",
+                  },
+                ],
+              };
+            }
+
+            // Get skill index URL from config
+            let skillIndexUrl = "https://api.claw.getfoundry.app";
+            try {
+              const config = JSON.parse(readFileSync(configPath, "utf-8"));
+              skillIndexUrl =
+                config?.plugins?.entries?.unbrowse?.config?.skillIndexUrl ??
+                skillIndexUrl;
+            } catch {}
+
+            let content = p.content;
+
+            // For patterns, look up from learnings
+            if (p.type === "pattern" && p.patternId) {
+              const patterns = learningEngine.getPatterns();
+              const pattern = patterns.find((pat) => pat.id === p.patternId);
+              if (!pattern) {
+                return {
+                  content: [
+                    { type: "text", text: `Pattern not found: ${p.patternId}` },
+                  ],
+                };
+              }
+              content = {
+                errorPattern: pattern.error || "",
+                resolution: pattern.resolution || "",
+                tool: pattern.tool,
+                context: pattern.context,
+                useCount: pattern.useCount || 1,
+              };
+            }
+
+            if (!content) {
+              return {
+                content: [
+                  {
+                    type: "text",
+                    text: "Provide content or patternId for the ability.",
+                  },
+                ],
+              };
+            }
+
+            try {
+              const resp = await fetch(`${skillIndexUrl}/skills/publish`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  abilityType: p.type,
+                  service: p.name,
+                  content,
+                  creatorWallet,
+                  baseUrl: "",
+                  authMethodType: "none",
+                  endpoints: [],
+                  skillMd: p.description || "",
+                  apiTemplate: "",
+                }),
+                signal: AbortSignal.timeout(30_000),
+              });
+
+              if (!resp.ok) {
+                const text = await resp.text();
+                return {
+                  content: [{ type: "text", text: `Publish failed: ${text}` }],
+                };
+              }
+
+              const result = (await resp.json()) as {
+                id: string;
+                slug: string;
+                version: number;
+                reviewStatus: string;
+              };
+
+              return {
+                content: [
+                  {
+                    type: "text",
+                    text: [
+                      `Published ${p.type}: ${p.name}`,
+                      ``,
+                      `ID: ${result.id}`,
+                      `Version: ${result.version}`,
+                      `Status: ${result.reviewStatus}`,
+                      ``,
+                      p.type === "pattern"
+                        ? "Patterns are free to share — thanks for contributing to the brain!"
+                        : `Others can download this ${p.type} via foundry_marketplace. You earn USDC per download.`,
+                    ].join("\n"),
+                  },
+                ],
+              };
+            } catch (err) {
+              return {
+                content: [
+                  {
+                    type: "text",
+                    text: `Publish error: ${(err as Error).message}`,
+                  },
+                ],
+              };
+            }
+          },
+        },
+
+        // ── Foundry Marketplace Tool ───────────────────────────────────────────
+        // Search and install abilities from the crowdsourced marketplace
+        {
+          name: "foundry_marketplace",
+          label: "Foundry Marketplace",
+          description:
+            "Search and install abilities from the Foundry marketplace. " +
+            "Abilities include skills (APIs), patterns (failure resolutions), extensions (plugins), " +
+            "techniques (code snippets), insights (approaches), and agent designs. " +
+            "Use action='search' with query, action='leaderboard' to see top abilities, " +
+            "or action='install' with id to download (costs vary by type).",
+          parameters: {
+            type: "object" as const,
+            properties: {
+              action: {
+                type: "string" as const,
+                enum: ["search", "leaderboard", "install"],
+                description: "Action to perform",
+              },
+              query: {
+                type: "string" as const,
+                description: "Search query (for action='search')",
+              },
+              type: {
+                type: "string" as const,
+                enum: [
+                  "skill",
+                  "pattern",
+                  "extension",
+                  "technique",
+                  "insight",
+                  "agent",
+                ],
+                description: "Filter by ability type",
+              },
+              id: {
+                type: "string" as const,
+                description: "Ability ID to install (for action='install')",
+              },
+              limit: {
+                type: "number" as const,
+                description: "Number of results (default: 10)",
+              },
+            },
+            required: ["action"],
+          },
+          async execute(_toolCallId: string, params: unknown) {
+            const p = params as {
+              action: string;
+              query?: string;
+              type?: string;
+              id?: string;
+              limit?: number;
+            };
+
+            // Get config for marketplace
+            const configPath = join(homedir(), ".openclaw", "openclaw.json");
+            let skillIndexUrl = "https://api.claw.getfoundry.app";
+            let solanaPrivateKey: string | undefined;
+            try {
+              const config = JSON.parse(readFileSync(configPath, "utf-8"));
+              skillIndexUrl =
+                config?.plugins?.entries?.unbrowse?.config?.skillIndexUrl ??
+                skillIndexUrl;
+              const walletPath =
+                config?.plugins?.entries?.unbrowse?.config?.solanaWalletPath;
+              if (walletPath && existsSync(walletPath)) {
+                const walletData = JSON.parse(
+                  readFileSync(walletPath, "utf-8"),
+                );
+                solanaPrivateKey = walletData.privateKey;
+              }
+            } catch {}
+
+            // Lazy-load brain client
+            const { BrainIndexClient } = await import("./src/brain-index.js");
+            const brainClient = new BrainIndexClient({
+              indexUrl: skillIndexUrl,
+              solanaPrivateKey,
+            });
+
+            try {
+              if (p.action === "leaderboard") {
+                const result = await brainClient.getLeaderboard({
+                  type: p.type as any,
+                  limit: p.limit ?? 20,
+                });
+
+                if (result.abilities.length === 0) {
+                  return {
+                    content: [
+                      {
+                        type: "text",
+                        text: "No abilities in leaderboard yet. Be the first to publish!",
+                      },
+                    ],
+                  };
+                }
+
+                const lines = [
+                  `## Foundry Marketplace Leaderboard`,
+                  ``,
+                  `Showing top ${result.abilities.length} abilities by rank score:`,
+                  ``,
+                ];
+
+                for (const ability of result.abilities) {
+                  const price =
+                    ability.priceCents === 0
+                      ? "FREE"
+                      : `$${(ability.priceCents / 100).toFixed(2)}`;
+                  lines.push(
+                    `**${ability.service}** (${ability.abilityType})`,
+                    `  ID: ${ability.id} | Payers: ${ability.uniquePayers} | Score: ${ability.rankScore} | ${price}`,
+                    ``,
+                  );
+                }
+
+                lines.push(
+                  `Use foundry_marketplace with action="install" and id="<id>" to download.`,
+                );
+                return { content: [{ type: "text", text: lines.join("\n") }] };
+              }
+
+              if (p.action === "search") {
+                if (!p.query) {
+                  return {
+                    content: [
+                      { type: "text", text: "Provide a query for search." },
+                    ],
+                  };
+                }
+
+                const result = await brainClient.searchAbilities(p.query, {
+                  type: p.type as any,
+                  limit: p.limit ?? 10,
+                });
+
+                if (result.skills.length === 0) {
+                  return {
+                    content: [
+                      {
+                        type: "text",
+                        text: `No abilities found for: ${p.query}`,
+                      },
+                    ],
+                  };
+                }
+
+                const lines = [
+                  `## Search Results: "${p.query}"`,
+                  ``,
+                  `Found ${result.total} abilities:`,
+                  ``,
+                ];
+
+                for (const ability of result.skills) {
+                  const price =
+                    ability.priceCents === 0
+                      ? "FREE"
+                      : `$${(ability.priceCents / 100).toFixed(2)}`;
+                  lines.push(
+                    `**${ability.service}** (${ability.abilityType})`,
+                    `  ID: ${ability.id} | Downloads: ${ability.downloadCount} | ${price}`,
+                    ``,
+                  );
+                }
+
+                lines.push(
+                  `Use foundry_marketplace with action="install" and id="<id>" to download.`,
+                );
+                return { content: [{ type: "text", text: lines.join("\n") }] };
+              }
+
+              if (p.action === "install") {
+                if (!p.id) {
+                  return {
+                    content: [
+                      { type: "text", text: "Provide an id to install." },
+                    ],
+                  };
+                }
+
+                const ability = await brainClient.downloadAbility(p.id);
+
+                // Handle different ability types
+                const abilityType =
+                  (ability as any).abilityType ||
+                  (ability as any).type ||
+                  "skill";
+
+                if (abilityType === "pattern") {
+                  // Record pattern in learning engine
+                  const content = (ability as any).content;
+                  if (content?.errorPattern && content?.resolution) {
+                    const patternId = learningEngine.recordFailure(
+                      "imported",
+                      content.errorPattern,
+                      content.context,
+                    );
+                    learningEngine.recordResolution(
+                      patternId,
+                      content.resolution,
+                    );
+                    return {
+                      content: [
+                        {
+                          type: "text",
+                          text: [
+                            `Installed pattern: ${(ability as any).service}`,
+                            ``,
+                            `Error: ${content.errorPattern}`,
+                            `Resolution: ${content.resolution}`,
+                            ``,
+                            `Pattern recorded — will be suggested when similar errors occur.`,
+                          ].join("\n"),
+                        },
+                      ],
+                    };
+                  }
+                }
+
+                if (abilityType === "extension") {
+                  // Write extension to extensions directory
+                  const content = (ability as any).content;
+                  if (content?.code) {
+                    const extId =
+                      (ability as any).service
+                        ?.toLowerCase()
+                        .replace(/[^a-z0-9]+/g, "-") || "imported-ext";
+                    const result = await writer.writeExtension({
+                      id: extId,
+                      name: (ability as any).service,
+                      description: content.description || "",
+                      tools: [],
+                      hooks: [],
+                    });
+
+                    return {
+                      content: [
+                        {
+                          type: "text",
+                          text: [
+                            `Installed extension: ${(ability as any).service}`,
+                            ``,
+                            `Path: ${result.path}`,
+                            ``,
+                            `Run foundry_restart to load the new extension.`,
+                          ].join("\n"),
+                        },
+                      ],
+                    };
+                  }
+                }
+
+                // Default: return raw ability info
+                return {
+                  content: [
+                    {
+                      type: "text",
+                      text: [
+                        `Downloaded: ${(ability as any).service || p.id}`,
+                        `Type: ${abilityType}`,
+                        ``,
+                        `Content:`,
+                        JSON.stringify(
+                          (ability as any).content || ability,
+                          null,
+                          2,
+                        ).slice(0, 2000),
+                      ].join("\n"),
+                    },
+                  ],
+                };
+              }
+
+              return {
+                content: [
+                  {
+                    type: "text",
+                    text: `Unknown action: ${p.action}. Use search, leaderboard, or install.`,
+                  },
+                ],
+              };
+            } catch (err) {
+              return {
+                content: [
+                  {
+                    type: "text",
+                    text: `Marketplace error: ${(err as Error).message}`,
+                  },
+                ],
+              };
+            }
+          },
+        },
+
+        // ── foundry_overseer ────────────────────────────────────────────────────
+        // Self-Improving Coding Agent (arXiv:2504.15228): Autonomous overseer
+        {
+          name: "foundry_overseer",
+          label: "Run Overseer",
+          description:
+            "Run the autonomous overseer to analyze patterns, identify crystallization candidates, " +
+            "find recurring failures, and get self-improvement recommendations.",
+          parameters: {
+            type: "object" as const,
+            properties: {},
+            required: [] as string[],
+          },
+          async execute() {
+            const report = learningEngine.runOverseer(dataDir);
+            const metrics = learningEngine.getAllToolMetrics();
+
+            let output = `## Foundry Overseer Report\n\n`;
+            output += `**Generated**: ${report.timestamp}\n`;
+            output += `**Patterns analyzed**: ${report.patternsAnalyzed}\n\n`;
+
+            // Tool fitness (ADAS)
+            if (metrics.length > 0) {
+              output += `### Tool Fitness (ADAS)\n`;
+              const sorted = metrics.sort((a, b) => b.fitness - a.fitness);
+              for (const m of sorted.slice(0, 10)) {
+                const bar =
+                  "█".repeat(Math.floor(m.fitness * 10)) +
+                  "░".repeat(10 - Math.floor(m.fitness * 10));
+                output += `- **${m.toolName}**: ${bar} ${(m.fitness * 100).toFixed(0)}% (${m.successCount}/${m.successCount + m.failureCount})\n`;
+              }
+              output += `\n`;
+            }
+
+            // Crystallization candidates (HexMachina)
+            if (report.crystallizationCandidates.length > 0) {
+              output += `### Crystallization Candidates (HexMachina)\n`;
+              output += `Patterns ready to become executable hooks:\n\n`;
+              for (const c of report.crystallizationCandidates) {
+                output += `- **${c.tool}**: "${c.error?.slice(0, 50)}..." (used ${c.useCount}x)\n`;
+                output += `  → \`foundry_crystallize patternId="${c.id}"\`\n`;
+              }
+              output += `\n`;
+            }
+
+            // Recurring failures
+            if (report.recurringFailures.length > 0) {
+              output += `### Recurring Failures (Need Attention)\n`;
+              for (const f of report.recurringFailures) {
+                output += `- **${f.signature}**: ${f.count} occurrences\n`;
+              }
+              output += `\n`;
+            }
+
+            // Actions taken (autonomous behavior)
+            if (report.actionsExecuted.length > 0) {
+              output += `### Actions Executed\n`;
+              for (const action of report.actionsExecuted) {
+                output += `- ${action}\n`;
+              }
+              output += `\n`;
+            }
+
+            if (
+              report.crystallizationCandidates.length === 0 &&
+              report.recurringFailures.length === 0 &&
+              report.actionsExecuted.length === 0
+            ) {
+              output += `No immediate actions needed.\n`;
+            }
+
+            return { content: [{ type: "text", text: output }] };
+          },
+        },
+
+        // ── foundry_crystallize ─────────────────────────────────────────────────
+        // HexMachina (arXiv:2506.04651): LLM-driven crystallization
+        // Returns pattern context and asks LLM to generate hook code
+        {
+          name: "foundry_crystallize",
+          label: "Crystallize Pattern",
+          description:
+            "Start crystallization of a learned pattern. Returns pattern details and instructions " +
+            "for generating hook code. After reviewing, call foundry_save_hook with the generated code.",
+          parameters: {
+            type: "object" as const,
+            properties: {
+              patternId: {
+                type: "string" as const,
+                description:
+                  "ID of the pattern to crystallize (from foundry_overseer)",
+              },
+            },
+            required: ["patternId"] as string[],
+          },
+          async execute(_toolCallId: string, params: unknown) {
+            const p = params as { patternId: string };
+            const pattern = learningEngine
+              .getPatterns()
+              .find((l) => l.id === p.patternId);
+
+            if (!pattern) {
+              return {
+                content: [
+                  { type: "text", text: `Pattern not found: ${p.patternId}` },
+                ],
+              };
+            }
+            if (!pattern.resolution) {
+              return {
+                content: [
+                  {
+                    type: "text",
+                    text: `Pattern has no resolution to crystallize`,
+                  },
+                ],
+              };
+            }
+            if (pattern.crystallizedTo) {
+              return {
+                content: [
+                  {
+                    type: "text",
+                    text: `Already crystallized to: ${pattern.crystallizedTo}`,
+                  },
+                ],
+              };
+            }
+
+            // HexMachina: Return context for LLM to generate the hook
+            let output = `## Crystallize Pattern: ${pattern.id}\n\n`;
+            output += `### Pattern Details\n`;
+            output += `- **Tool**: \`${pattern.tool}\`\n`;
+            output += `- **Error Pattern**: ${pattern.error}\n`;
+            output += `- **Learned Resolution**: ${pattern.resolution}\n`;
+            output += `- **Context**: ${pattern.context || "N/A"}\n`;
+            output += `- **Use Count**: ${pattern.useCount}\n`;
+            output += `- **Success Trajectory**: ${(pattern.improvementTrajectory || []).join(", ") || "N/A"}\n\n`;
+
+            output += `### Generate Hook Code\n\n`;
+            output += `Create a \`before_tool_call\` hook that:\n`;
+            output += `1. Triggers when \`${pattern.tool}\` is about to be called\n`;
+            output += `2. Detects conditions that would lead to: "${pattern.error?.slice(0, 100)}"\n`;
+            output += `3. Applies the resolution proactively: "${pattern.resolution}"\n`;
+            output += `4. Uses \`ctx.injectSystemMessage()\` to guide the LLM\n\n`;
+
+            output += `### Hook Template\n`;
+            output += `\`\`\`typescript\n`;
+            output += `api.on("before_tool_call", async (event, ctx) => {\n`;
+            output += `  if (event.toolName === "${pattern.tool}") {\n`;
+            output += `    // TODO: Add detection logic for the error condition\n`;
+            output += `    // TODO: Apply resolution proactively\n`;
+            output += `    if (ctx?.injectSystemMessage) {\n`;
+            output += `      ctx.injectSystemMessage(\`[CRYSTALLIZED] Apply: ${pattern.resolution?.slice(0, 100)}\`);\n`;
+            output += `    }\n`;
+            output += `  }\n`;
+            output += `});\n`;
+            output += `\`\`\`\n\n`;
+
+            output += `### Next Step\n`;
+            output += `Generate the complete hook code based on the pattern above, then call:\n`;
+            output += `\`\`\`\n`;
+            output += `foundry_save_hook(\n`;
+            output += `  patternId: "${pattern.id}",\n`;
+            output += `  hookCode: "<your generated code>"\n`;
+            output += `)\n`;
+            output += `\`\`\`\n`;
+
+            return { content: [{ type: "text", text: output }] };
+          },
+        },
+
+        // ── foundry_save_hook ──────────────────────────────────────────────────
+        // HexMachina: Save LLM-generated hook code
+        {
+          name: "foundry_save_hook",
+          label: "Save Crystallized Hook",
+          description:
+            "Save the LLM-generated hook code from crystallization. " +
+            "Call this after foundry_crystallize with the generated code.",
+          parameters: {
+            type: "object" as const,
+            properties: {
+              patternId: {
+                type: "string" as const,
+                description: "ID of the pattern being crystallized",
+              },
+              hookCode: {
+                type: "string" as const,
+                description: "The generated hook code (TypeScript)",
+              },
+              hookName: {
+                type: "string" as const,
+                description:
+                  "Optional name for the hook (defaults to pattern-based name)",
+              },
+            },
+            required: ["patternId", "hookCode"] as string[],
+          },
+          async execute(_toolCallId: string, params: unknown) {
+            const p = params as {
+              patternId: string;
+              hookCode: string;
+              hookName?: string;
+            };
+            const pattern = learningEngine
+              .getPatterns()
+              .find((l) => l.id === p.patternId);
+
+            if (!pattern) {
+              return {
+                content: [
+                  { type: "text", text: `Pattern not found: ${p.patternId}` },
+                ],
+              };
+            }
+            if (pattern.crystallizedTo) {
+              return {
+                content: [
+                  {
+                    type: "text",
+                    text: `Already crystallized to: ${pattern.crystallizedTo}`,
+                  },
+                ],
+              };
+            }
+
+            // Validate the hook code has basic structure
+            if (
+              !p.hookCode.includes("api.on") &&
+              !p.hookCode.includes("event") &&
+              !p.hookCode.includes("ctx")
+            ) {
+              return {
+                content: [
+                  {
+                    type: "text",
+                    text: `Invalid hook code - must include api.on(), event, and ctx`,
+                  },
+                ],
+              };
+            }
+
+            // Generate hook ID and save
+            const hookId =
+              p.hookName || `crystallized_${pattern.tool}_${Date.now()}`;
+            const hooksDir = join(dataDir, "hooks");
+            if (!existsSync(hooksDir)) mkdirSync(hooksDir, { recursive: true });
+
+            const hookPath = join(hooksDir, `${hookId}.ts`);
+            const fullCode = `// HexMachina crystallized from pattern: ${pattern.id}
 // Tool: ${pattern.tool}
 // Error: ${pattern.error?.slice(0, 100)}
 // Resolution: ${pattern.resolution?.slice(0, 100)}
@@ -3972,541 +4831,627 @@ ${p.toolCode.split("\n").map((l: string) => "          " + l).join("\n")}
 
 ${p.hookCode}
 `;
-          writeFileSync(hookPath, fullCode);
-          learningEngine.markCrystallized(p.patternId, hookId);
+            writeFileSync(hookPath, fullCode);
+            learningEngine.markCrystallized(p.patternId, hookId);
 
-          let output = `## Hook Saved\n\n`;
-          output += `**Pattern**: ${pattern.id}\n`;
-          output += `**Hook ID**: ${hookId}\n`;
-          output += `**Path**: ${hookPath}\n\n`;
-          output += `The pattern is now executable code.\n`;
-          output += `Run \`foundry_restart\` to activate the hook.\n`;
+            let output = `## Hook Saved\n\n`;
+            output += `**Pattern**: ${pattern.id}\n`;
+            output += `**Hook ID**: ${hookId}\n`;
+            output += `**Path**: ${hookPath}\n\n`;
+            output += `The pattern is now executable code.\n`;
+            output += `Run \`foundry_restart\` to activate the hook.\n`;
 
-          return { content: [{ type: "text", text: output }] };
-        },
-      },
-
-      // ── foundry_metrics ─────────────────────────────────────────────────────
-      // ADAS (arXiv:2408.08435): View tool performance metrics
-      {
-        name: "foundry_metrics",
-        label: "Tool Metrics",
-        description: "View tool performance metrics and fitness scores for agent evolution.",
-        parameters: {
-          type: "object" as const,
-          properties: {
-            toolName: {
-              type: "string" as const,
-              description: "Specific tool to get metrics for (optional)",
-            },
+            return { content: [{ type: "text", text: output }] };
           },
-          required: [] as string[],
         },
-        async execute(_toolCallId: string, params: unknown) {
-          const p = params as { toolName?: string };
-          const metrics = learningEngine.getAllToolMetrics();
 
-          if (p.toolName) {
-            const m = metrics.find(m => m.toolName === p.toolName);
-            if (!m) return { content: [{ type: "text", text: `No metrics for: ${p.toolName}` }] };
+        // ── foundry_metrics ─────────────────────────────────────────────────────
+        // ADAS (arXiv:2408.08435): View tool performance metrics
+        {
+          name: "foundry_metrics",
+          label: "Tool Metrics",
+          description:
+            "View tool performance metrics and fitness scores for agent evolution.",
+          parameters: {
+            type: "object" as const,
+            properties: {
+              toolName: {
+                type: "string" as const,
+                description: "Specific tool to get metrics for (optional)",
+              },
+            },
+            required: [] as string[],
+          },
+          async execute(_toolCallId: string, params: unknown) {
+            const p = params as { toolName?: string };
+            const metrics = learningEngine.getAllToolMetrics();
 
-            return { content: [{ type: "text", text: `
+            if (p.toolName) {
+              const m = metrics.find((m) => m.toolName === p.toolName);
+              if (!m)
+                return {
+                  content: [
+                    { type: "text", text: `No metrics for: ${p.toolName}` },
+                  ],
+                };
+
+              return {
+                content: [
+                  {
+                    type: "text",
+                    text: `
 ## ${m.toolName} Metrics
 
 - **Fitness**: ${(m.fitness * 100).toFixed(1)}%
 - **Success**: ${m.successCount}
 - **Failure**: ${m.failureCount}
 - **Avg Latency**: ${m.successCount + m.failureCount > 0 ? (m.totalLatencyMs / (m.successCount + m.failureCount)).toFixed(0) : 0}ms
-` }] };
-          }
-
-          if (metrics.length === 0) {
-            return { content: [{ type: "text", text: "No tool metrics recorded yet." }] };
-          }
-
-          const sorted = metrics.sort((a, b) => b.fitness - a.fitness);
-          let output = `## Tool Performance Metrics (ADAS)\n\n`;
-          output += `| Tool | Fitness | Success | Failure | Avg Latency |\n`;
-          output += `|------|---------|---------|---------|-------------|\n`;
-
-          for (const m of sorted) {
-            const avgLatency = m.successCount + m.failureCount > 0
-              ? (m.totalLatencyMs / (m.successCount + m.failureCount)).toFixed(0)
-              : 0;
-            output += `| ${m.toolName} | ${(m.fitness * 100).toFixed(0)}% | ${m.successCount} | ${m.failureCount} | ${avgLatency}ms |\n`;
-          }
-
-          return { content: [{ type: "text", text: output }] };
-        },
-      },
-
-      // ── foundry_evolve ─────────────────────────────────────────────────────
-      // ADAS (arXiv:2408.08435): Evolve underperforming tools
-      {
-        name: "foundry_evolve",
-        label: "Evolve Tools",
-        description:
-          "Identify underperforming tools and generate improved versions using ADAS patterns. " +
-          "Returns analysis and improvement prompts for the LLM to generate better implementations.",
-        parameters: {
-          type: "object" as const,
-          properties: {
-            fitnessThreshold: {
-              type: "number" as const,
-              description: "Tools below this fitness (0-1) will be flagged for evolution. Default: 0.5",
-            },
-            toolName: {
-              type: "string" as const,
-              description: "Specific tool to evolve (optional)",
-            },
-          },
-          required: [] as string[],
-        },
-        async execute(_toolCallId: string, params: unknown) {
-          const p = params as { fitnessThreshold?: number; toolName?: string };
-          const threshold = p.fitnessThreshold ?? 0.5;
-          const metrics = learningEngine.getAllToolMetrics();
-
-          // Find underperforming tools
-          let underperforming = metrics.filter(m =>
-            m.fitness < threshold &&
-            (m.successCount + m.failureCount) >= 3 // Minimum samples
-          );
-
-          if (p.toolName) {
-            underperforming = underperforming.filter(m => m.toolName === p.toolName);
-          }
-
-          if (underperforming.length === 0) {
-            if (p.toolName) {
-              const m = metrics.find(m => m.toolName === p.toolName);
-              if (m) {
-                return { content: [{ type: "text", text: `Tool "${p.toolName}" has fitness ${(m.fitness * 100).toFixed(0)}% (above threshold ${(threshold * 100).toFixed(0)}%)` }] };
-              }
-              return { content: [{ type: "text", text: `No metrics for: ${p.toolName}` }] };
-            }
-            return { content: [{ type: "text", text: `No underperforming tools found (threshold: ${(threshold * 100).toFixed(0)}%)` }] };
-          }
-
-          // Get failure patterns for these tools
-          const patterns = learningEngine.getPatterns();
-          const failures = learningEngine.getAll().filter(l => l.type === "failure");
-
-          let output = `## ADAS Tool Evolution\n\n`;
-          output += `Found ${underperforming.length} tool(s) below ${(threshold * 100).toFixed(0)}% fitness.\n\n`;
-
-          for (const tool of underperforming) {
-            output += `### ${tool.toolName}\n\n`;
-            output += `**Current Performance:**\n`;
-            output += `- Fitness: ${(tool.fitness * 100).toFixed(0)}%\n`;
-            output += `- Success: ${tool.successCount} | Failure: ${tool.failureCount}\n`;
-            output += `- Avg Latency: ${tool.successCount + tool.failureCount > 0 ? (tool.totalLatencyMs / (tool.successCount + tool.failureCount)).toFixed(0) : 0}ms\n\n`;
-
-            // Find related failures
-            const toolFailures = failures.filter(f => f.tool === tool.toolName).slice(-5);
-            if (toolFailures.length > 0) {
-              output += `**Recent Failures:**\n`;
-              for (const f of toolFailures) {
-                output += `- ${f.error?.slice(0, 80)}...\n`;
-              }
-              output += `\n`;
-            }
-
-            // Find related patterns (resolutions)
-            const toolPatterns = patterns.filter(p => p.tool === tool.toolName);
-            if (toolPatterns.length > 0) {
-              output += `**Known Solutions:**\n`;
-              for (const p of toolPatterns) {
-                output += `- Error: ${p.error?.slice(0, 50)}... → Resolution: ${p.resolution?.slice(0, 80)}\n`;
-              }
-              output += `\n`;
-            }
-
-            output += `**Evolution Strategy:**\n`;
-            output += `Based on the failure patterns, consider:\n`;
-            output += `1. Adding pre-validation of inputs\n`;
-            output += `2. Adding retry logic with backoff\n`;
-            output += `3. Adding fallback behavior\n`;
-            output += `4. Improving error messages\n\n`;
-          }
-
-          output += `### Next Steps\n\n`;
-          output += `To evolve a tool, analyze the failures above and:\n`;
-          output += `1. Design an improved implementation\n`;
-          output += `2. Use \`foundry_add_tool\` to add a new version, or\n`;
-          output += `3. Use \`foundry_extend_self\` to add a wrapper/improvement\n\n`;
-          output += `The new version should address the failure patterns while maintaining the original functionality.\n`;
-
-          return { content: [{ type: "text", text: output }] };
-        },
-      },
-
-      // ── foundry_track_outcome ──────────────────────────────────────────────
-      // Outcome-based learning: register a task for feedback tracking
-      {
-        name: "foundry_track_outcome",
-        label: "Track Outcome",
-        description:
-          "Register a task (e.g., TikTok post, tweet, email campaign) for outcome tracking. " +
-          "Later, collect real-world feedback (views, engagement) to learn what works.",
-        parameters: {
-          type: "object" as const,
-          properties: {
-            taskType: {
-              type: "string" as const,
-              description: "Type of task (e.g., 'tiktok_post', 'tweet', 'linkedin_post', 'email_campaign')",
-            },
-            taskDescription: {
-              type: "string" as const,
-              description: "Brief description of what was done",
-            },
-            taskParams: {
-              type: "object" as const,
-              description: "Parameters used (content, hashtags, timing, audience, etc.)",
-            },
-            successThreshold: {
-              type: "object" as const,
-              description: "Optional: metrics thresholds for success (e.g., { views: 1000, likes: 50 })",
-            },
-          },
-          required: ["taskType", "taskDescription", "taskParams"] as string[],
-        },
-        async execute(_toolCallId: string, params: unknown) {
-          const p = params as {
-            taskType: string;
-            taskDescription: string;
-            taskParams: Record<string, any>;
-            successThreshold?: Record<string, number>;
-          };
-
-          const outcomeId = learningEngine.trackOutcome(
-            p.taskType,
-            p.taskDescription,
-            p.taskParams,
-            p.successThreshold
-          );
-
-          return {
-            content: [{
-              type: "text",
-              text: `Tracking outcome: **${p.taskType}**\n\n` +
-                `**ID**: \`${outcomeId}\`\n` +
-                `**Description**: ${p.taskDescription}\n` +
-                `**Params**: ${JSON.stringify(p.taskParams, null, 2)}\n\n` +
-                `Use \`foundry_record_feedback\` with this ID once you have engagement metrics, ` +
-                `or the system will automatically attempt to collect feedback after 1 hour.`,
-            }],
-          };
-        },
-      },
-
-      // ── foundry_record_feedback ────────────────────────────────────────────
-      // Manually record feedback metrics for a tracked outcome
-      {
-        name: "foundry_record_feedback",
-        label: "Record Feedback",
-        description:
-          "Record real-world feedback metrics for a tracked outcome. " +
-          "This updates the outcome with engagement data and triggers insight regeneration.",
-        parameters: {
-          type: "object" as const,
-          properties: {
-            outcomeId: {
-              type: "string" as const,
-              description: "The outcome ID returned by foundry_track_outcome",
-            },
-            metrics: {
-              type: "object" as const,
-              description: "Engagement metrics (e.g., { views: 5000, likes: 120, comments: 15, shares: 8 })",
-            },
-            feedbackSource: {
-              type: "string" as const,
-              description: "Source of the metrics (e.g., 'tiktok_analytics', 'twitter_api', 'manual')",
-            },
-          },
-          required: ["outcomeId", "metrics", "feedbackSource"] as string[],
-        },
-        async execute(_toolCallId: string, params: unknown) {
-          const p = params as {
-            outcomeId: string;
-            metrics: Record<string, number>;
-            feedbackSource: string;
-          };
-
-          const outcome = learningEngine.recordFeedback(
-            p.outcomeId,
-            p.metrics,
-            p.feedbackSource
-          );
-
-          if (!outcome) {
-            return {
-              content: [{
-                type: "text",
-                text: `Outcome not found: \`${p.outcomeId}\``,
-              }],
-            };
-          }
-
-          const insights = learningEngine.getTaskInsights(outcome.taskType);
-
-          return {
-            content: [{
-              type: "text",
-              text: `Feedback recorded for **${outcome.taskType}**\n\n` +
-                `**Metrics**: ${JSON.stringify(outcome.metrics)}\n` +
-                `**Success**: ${outcome.success === true ? "✅ Yes" : outcome.success === false ? "❌ No" : "⏳ Pending"}\n\n` +
-                (insights ? `**Updated Insights** (${insights.totalTasks} tasks tracked):\n` +
-                  insights.recommendations.map(r => `- ${r}`).join("\n") : ""),
-            }],
-          };
-        },
-      },
-
-      // ── foundry_get_insights ───────────────────────────────────────────────
-      // Get learned insights for a task type
-      {
-        name: "foundry_get_insights",
-        label: "Get Outcome Insights",
-        description:
-          "Get learned insights and recommendations for a task type based on past outcomes. " +
-          "Use this before executing a task to apply what worked before.",
-        parameters: {
-          type: "object" as const,
-          properties: {
-            taskType: {
-              type: "string" as const,
-              description: "Type of task (e.g., 'tiktok_post', 'tweet'). Leave empty to list all task types.",
-            },
-          },
-          required: [] as string[],
-        },
-        async execute(_toolCallId: string, params: unknown) {
-          const p = params as { taskType?: string };
-
-          if (!p.taskType) {
-            // List all task types with insights
-            const taskTypes = learningEngine.getAllTaskTypes();
-            if (taskTypes.length === 0) {
-              return {
-                content: [{
-                  type: "text",
-                  text: "No outcome insights yet. Use `foundry_track_outcome` to start tracking tasks.",
-                }],
+`,
+                  },
+                ],
               };
             }
 
-            let output = `## Task Types with Insights\n\n`;
-            for (const type of taskTypes) {
-              const insights = learningEngine.getTaskInsights(type);
-              if (insights) {
-                output += `- **${type}**: ${insights.totalTasks} tasks (${insights.successfulTasks} successful)\n`;
+            if (metrics.length === 0) {
+              return {
+                content: [
+                  { type: "text", text: "No tool metrics recorded yet." },
+                ],
+              };
+            }
+
+            const sorted = metrics.sort((a, b) => b.fitness - a.fitness);
+            let output = `## Tool Performance Metrics (ADAS)\n\n`;
+            output += `| Tool | Fitness | Success | Failure | Avg Latency |\n`;
+            output += `|------|---------|---------|---------|-------------|\n`;
+
+            for (const m of sorted) {
+              const avgLatency =
+                m.successCount + m.failureCount > 0
+                  ? (
+                      m.totalLatencyMs /
+                      (m.successCount + m.failureCount)
+                    ).toFixed(0)
+                  : 0;
+              output += `| ${m.toolName} | ${(m.fitness * 100).toFixed(0)}% | ${m.successCount} | ${m.failureCount} | ${avgLatency}ms |\n`;
+            }
+
+            return { content: [{ type: "text", text: output }] };
+          },
+        },
+
+        // ── foundry_evolve ─────────────────────────────────────────────────────
+        // ADAS (arXiv:2408.08435): Evolve underperforming tools
+        {
+          name: "foundry_evolve",
+          label: "Evolve Tools",
+          description:
+            "Identify underperforming tools and generate improved versions using ADAS patterns. " +
+            "Returns analysis and improvement prompts for the LLM to generate better implementations.",
+          parameters: {
+            type: "object" as const,
+            properties: {
+              fitnessThreshold: {
+                type: "number" as const,
+                description:
+                  "Tools below this fitness (0-1) will be flagged for evolution. Default: 0.5",
+              },
+              toolName: {
+                type: "string" as const,
+                description: "Specific tool to evolve (optional)",
+              },
+            },
+            required: [] as string[],
+          },
+          async execute(_toolCallId: string, params: unknown) {
+            const p = params as {
+              fitnessThreshold?: number;
+              toolName?: string;
+            };
+            const threshold = p.fitnessThreshold ?? 0.5;
+            const metrics = learningEngine.getAllToolMetrics();
+
+            // Find underperforming tools
+            let underperforming = metrics.filter(
+              (m) =>
+                m.fitness < threshold && m.successCount + m.failureCount >= 3, // Minimum samples
+            );
+
+            if (p.toolName) {
+              underperforming = underperforming.filter(
+                (m) => m.toolName === p.toolName,
+              );
+            }
+
+            if (underperforming.length === 0) {
+              if (p.toolName) {
+                const m = metrics.find((m) => m.toolName === p.toolName);
+                if (m) {
+                  return {
+                    content: [
+                      {
+                        type: "text",
+                        text: `Tool "${p.toolName}" has fitness ${(m.fitness * 100).toFixed(0)}% (above threshold ${(threshold * 100).toFixed(0)}%)`,
+                      },
+                    ],
+                  };
+                }
+                return {
+                  content: [
+                    { type: "text", text: `No metrics for: ${p.toolName}` },
+                  ],
+                };
+              }
+              return {
+                content: [
+                  {
+                    type: "text",
+                    text: `No underperforming tools found (threshold: ${(threshold * 100).toFixed(0)}%)`,
+                  },
+                ],
+              };
+            }
+
+            // Get failure patterns for these tools
+            const patterns = learningEngine.getPatterns();
+            const failures = learningEngine
+              .getAll()
+              .filter((l) => l.type === "failure");
+
+            let output = `## ADAS Tool Evolution\n\n`;
+            output += `Found ${underperforming.length} tool(s) below ${(threshold * 100).toFixed(0)}% fitness.\n\n`;
+
+            for (const tool of underperforming) {
+              output += `### ${tool.toolName}\n\n`;
+              output += `**Current Performance:**\n`;
+              output += `- Fitness: ${(tool.fitness * 100).toFixed(0)}%\n`;
+              output += `- Success: ${tool.successCount} | Failure: ${tool.failureCount}\n`;
+              output += `- Avg Latency: ${tool.successCount + tool.failureCount > 0 ? (tool.totalLatencyMs / (tool.successCount + tool.failureCount)).toFixed(0) : 0}ms\n\n`;
+
+              // Find related failures
+              const toolFailures = failures
+                .filter((f) => f.tool === tool.toolName)
+                .slice(-5);
+              if (toolFailures.length > 0) {
+                output += `**Recent Failures:**\n`;
+                for (const f of toolFailures) {
+                  output += `- ${f.error?.slice(0, 80)}...\n`;
+                }
+                output += `\n`;
+              }
+
+              // Find related patterns (resolutions)
+              const toolPatterns = patterns.filter(
+                (p) => p.tool === tool.toolName,
+              );
+              if (toolPatterns.length > 0) {
+                output += `**Known Solutions:**\n`;
+                for (const p of toolPatterns) {
+                  output += `- Error: ${p.error?.slice(0, 50)}... → Resolution: ${p.resolution?.slice(0, 80)}\n`;
+                }
+                output += `\n`;
+              }
+
+              output += `**Evolution Strategy:**\n`;
+              output += `Based on the failure patterns, consider:\n`;
+              output += `1. Adding pre-validation of inputs\n`;
+              output += `2. Adding retry logic with backoff\n`;
+              output += `3. Adding fallback behavior\n`;
+              output += `4. Improving error messages\n\n`;
+            }
+
+            output += `### Next Steps\n\n`;
+            output += `To evolve a tool, analyze the failures above and:\n`;
+            output += `1. Design an improved implementation\n`;
+            output += `2. Use \`foundry_add_tool\` to add a new version, or\n`;
+            output += `3. Use \`foundry_extend_self\` to add a wrapper/improvement\n\n`;
+            output += `The new version should address the failure patterns while maintaining the original functionality.\n`;
+
+            return { content: [{ type: "text", text: output }] };
+          },
+        },
+
+        // ── foundry_track_outcome ──────────────────────────────────────────────
+        // Outcome-based learning: register a task for feedback tracking
+        {
+          name: "foundry_track_outcome",
+          label: "Track Outcome",
+          description:
+            "Register a task (e.g., TikTok post, tweet, email campaign) for outcome tracking. " +
+            "Later, collect real-world feedback (views, engagement) to learn what works.",
+          parameters: {
+            type: "object" as const,
+            properties: {
+              taskType: {
+                type: "string" as const,
+                description:
+                  "Type of task (e.g., 'tiktok_post', 'tweet', 'linkedin_post', 'email_campaign')",
+              },
+              taskDescription: {
+                type: "string" as const,
+                description: "Brief description of what was done",
+              },
+              taskParams: {
+                type: "object" as const,
+                description:
+                  "Parameters used (content, hashtags, timing, audience, etc.)",
+              },
+              successThreshold: {
+                type: "object" as const,
+                description:
+                  "Optional: metrics thresholds for success (e.g., { views: 1000, likes: 50 })",
+              },
+            },
+            required: ["taskType", "taskDescription", "taskParams"] as string[],
+          },
+          async execute(_toolCallId: string, params: unknown) {
+            const p = params as {
+              taskType: string;
+              taskDescription: string;
+              taskParams: Record<string, any>;
+              successThreshold?: Record<string, number>;
+            };
+
+            const outcomeId = learningEngine.trackOutcome(
+              p.taskType,
+              p.taskDescription,
+              p.taskParams,
+              p.successThreshold,
+            );
+
+            return {
+              content: [
+                {
+                  type: "text",
+                  text:
+                    `Tracking outcome: **${p.taskType}**\n\n` +
+                    `**ID**: \`${outcomeId}\`\n` +
+                    `**Description**: ${p.taskDescription}\n` +
+                    `**Params**: ${JSON.stringify(p.taskParams, null, 2)}\n\n` +
+                    `Use \`foundry_record_feedback\` with this ID once you have engagement metrics, ` +
+                    `or the system will automatically attempt to collect feedback after 1 hour.`,
+                },
+              ],
+            };
+          },
+        },
+
+        // ── foundry_record_feedback ────────────────────────────────────────────
+        // Manually record feedback metrics for a tracked outcome
+        {
+          name: "foundry_record_feedback",
+          label: "Record Feedback",
+          description:
+            "Record real-world feedback metrics for a tracked outcome. " +
+            "This updates the outcome with engagement data and triggers insight regeneration.",
+          parameters: {
+            type: "object" as const,
+            properties: {
+              outcomeId: {
+                type: "string" as const,
+                description: "The outcome ID returned by foundry_track_outcome",
+              },
+              metrics: {
+                type: "object" as const,
+                description:
+                  "Engagement metrics (e.g., { views: 5000, likes: 120, comments: 15, shares: 8 })",
+              },
+              feedbackSource: {
+                type: "string" as const,
+                description:
+                  "Source of the metrics (e.g., 'tiktok_analytics', 'twitter_api', 'manual')",
+              },
+            },
+            required: ["outcomeId", "metrics", "feedbackSource"] as string[],
+          },
+          async execute(_toolCallId: string, params: unknown) {
+            const p = params as {
+              outcomeId: string;
+              metrics: Record<string, number>;
+              feedbackSource: string;
+            };
+
+            const outcome = learningEngine.recordFeedback(
+              p.outcomeId,
+              p.metrics,
+              p.feedbackSource,
+            );
+
+            if (!outcome) {
+              return {
+                content: [
+                  {
+                    type: "text",
+                    text: `Outcome not found: \`${p.outcomeId}\``,
+                  },
+                ],
+              };
+            }
+
+            const insights = learningEngine.getTaskInsights(outcome.taskType);
+
+            return {
+              content: [
+                {
+                  type: "text",
+                  text:
+                    `Feedback recorded for **${outcome.taskType}**\n\n` +
+                    `**Metrics**: ${JSON.stringify(outcome.metrics)}\n` +
+                    `**Success**: ${outcome.success === true ? "✅ Yes" : outcome.success === false ? "❌ No" : "⏳ Pending"}\n\n` +
+                    (insights
+                      ? `**Updated Insights** (${insights.totalTasks} tasks tracked):\n` +
+                        insights.recommendations.map((r) => `- ${r}`).join("\n")
+                      : ""),
+                },
+              ],
+            };
+          },
+        },
+
+        // ── foundry_get_insights ───────────────────────────────────────────────
+        // Get learned insights for a task type
+        {
+          name: "foundry_get_insights",
+          label: "Get Outcome Insights",
+          description:
+            "Get learned insights and recommendations for a task type based on past outcomes. " +
+            "Use this before executing a task to apply what worked before.",
+          parameters: {
+            type: "object" as const,
+            properties: {
+              taskType: {
+                type: "string" as const,
+                description:
+                  "Type of task (e.g., 'tiktok_post', 'tweet'). Leave empty to list all task types.",
+              },
+            },
+            required: [] as string[],
+          },
+          async execute(_toolCallId: string, params: unknown) {
+            const p = params as { taskType?: string };
+
+            if (!p.taskType) {
+              // List all task types with insights
+              const taskTypes = learningEngine.getAllTaskTypes();
+              if (taskTypes.length === 0) {
+                return {
+                  content: [
+                    {
+                      type: "text",
+                      text: "No outcome insights yet. Use `foundry_track_outcome` to start tracking tasks.",
+                    },
+                  ],
+                };
+              }
+
+              let output = `## Task Types with Insights\n\n`;
+              for (const type of taskTypes) {
+                const insights = learningEngine.getTaskInsights(type);
+                if (insights) {
+                  output += `- **${type}**: ${insights.totalTasks} tasks (${insights.successfulTasks} successful)\n`;
+                }
+              }
+              output += `\nUse \`foundry_get_insights\` with a specific taskType for detailed recommendations.`;
+              return { content: [{ type: "text", text: output }] };
+            }
+
+            const insights = learningEngine.getTaskInsights(p.taskType);
+            if (!insights || insights.totalTasks === 0) {
+              return {
+                content: [
+                  {
+                    type: "text",
+                    text: `No insights for **${p.taskType}** yet. Track some outcomes first.`,
+                  },
+                ],
+              };
+            }
+
+            let output = `## Insights: ${p.taskType}\n\n`;
+            output += `**Total Tasks**: ${insights.totalTasks} (${insights.successfulTasks} successful)\n\n`;
+
+            if (Object.keys(insights.avgMetrics).length > 0) {
+              output += `**Average Metrics**:\n`;
+              for (const [key, value] of Object.entries(insights.avgMetrics)) {
+                output += `- ${key}: ${value}\n`;
+              }
+              output += `\n`;
+            }
+
+            if (insights.recommendations.length > 0) {
+              output += `**Recommendations**:\n`;
+              for (const rec of insights.recommendations) {
+                output += `- ${rec}\n`;
+              }
+              output += `\n`;
+            }
+
+            if (insights.patterns.successful.length > 0) {
+              output += `**Successful Patterns**:\n`;
+              for (const pat of insights.patterns.successful) {
+                output += `- ${pat}\n`;
+              }
+              output += `\n`;
+            }
+
+            if (insights.patterns.unsuccessful.length > 0) {
+              output += `**Patterns to Avoid**:\n`;
+              for (const pat of insights.patterns.unsuccessful) {
+                output += `- ${pat}\n`;
+              }
+              output += `\n`;
+            }
+
+            if (insights.topPerformers.length > 0) {
+              output += `**Top Performers**:\n`;
+              for (const top of insights.topPerformers) {
+                output += `- ${top.taskDescription.slice(0, 50)}... (${JSON.stringify(top.metrics)})\n`;
               }
             }
-            output += `\nUse \`foundry_get_insights\` with a specific taskType for detailed recommendations.`;
+
             return { content: [{ type: "text", text: output }] };
-          }
-
-          const insights = learningEngine.getTaskInsights(p.taskType);
-          if (!insights || insights.totalTasks === 0) {
-            return {
-              content: [{
-                type: "text",
-                text: `No insights for **${p.taskType}** yet. Track some outcomes first.`,
-              }],
-            };
-          }
-
-          let output = `## Insights: ${p.taskType}\n\n`;
-          output += `**Total Tasks**: ${insights.totalTasks} (${insights.successfulTasks} successful)\n\n`;
-
-          if (Object.keys(insights.avgMetrics).length > 0) {
-            output += `**Average Metrics**:\n`;
-            for (const [key, value] of Object.entries(insights.avgMetrics)) {
-              output += `- ${key}: ${value}\n`;
-            }
-            output += `\n`;
-          }
-
-          if (insights.recommendations.length > 0) {
-            output += `**Recommendations**:\n`;
-            for (const rec of insights.recommendations) {
-              output += `- ${rec}\n`;
-            }
-            output += `\n`;
-          }
-
-          if (insights.patterns.successful.length > 0) {
-            output += `**Successful Patterns**:\n`;
-            for (const pat of insights.patterns.successful) {
-              output += `- ${pat}\n`;
-            }
-            output += `\n`;
-          }
-
-          if (insights.patterns.unsuccessful.length > 0) {
-            output += `**Patterns to Avoid**:\n`;
-            for (const pat of insights.patterns.unsuccessful) {
-              output += `- ${pat}\n`;
-            }
-            output += `\n`;
-          }
-
-          if (insights.topPerformers.length > 0) {
-            output += `**Top Performers**:\n`;
-            for (const top of insights.topPerformers) {
-              output += `- ${top.taskDescription.slice(0, 50)}... (${JSON.stringify(top.metrics)})\n`;
-            }
-          }
-
-          return { content: [{ type: "text", text: output }] };
-        },
-      },
-
-      // ── foundry_pending_feedback ───────────────────────────────────────────
-      // List outcomes pending feedback collection
-      {
-        name: "foundry_pending_feedback",
-        label: "Pending Feedback",
-        description:
-          "List outcomes that are awaiting feedback collection. " +
-          "These are tasks that were tracked but haven't had metrics recorded yet.",
-        parameters: {
-          type: "object" as const,
-          properties: {
-            taskType: {
-              type: "string" as const,
-              description: "Filter by task type (optional)",
-            },
           },
-          required: [] as string[],
         },
-        async execute(_toolCallId: string, params: unknown) {
-          const p = params as { taskType?: string };
-          const pending = learningEngine.getPendingFeedback(p.taskType);
 
-          if (pending.length === 0) {
-            return {
-              content: [{
-                type: "text",
-                text: "No outcomes pending feedback collection.",
-              }],
-            };
-          }
-
-          let output = `## Pending Feedback Collection\n\n`;
-          output += `${pending.length} outcomes awaiting metrics:\n\n`;
-
-          for (const outcome of pending.slice(0, 10)) {
-            const age = Math.round((Date.now() - new Date(outcome.executedAt).getTime()) / (60 * 60 * 1000));
-            output += `- **${outcome.taskType}** (\`${outcome.id}\`)\n`;
-            output += `  - ${outcome.taskDescription.slice(0, 60)}...\n`;
-            output += `  - Executed: ${age}h ago\n`;
-          }
-
-          if (pending.length > 10) {
-            output += `\n...and ${pending.length - 10} more.`;
-          }
-
-          output += `\n\nUse \`foundry_record_feedback\` to record metrics for these outcomes.`;
-
-          return { content: [{ type: "text", text: output }] };
-        },
-      },
-
-      // ── foundry_apply_improvement ──────────────────────────────────────────
-      // Apply learned improvements to skills/extensions
-      {
-        name: "foundry_apply_improvement",
-        label: "Apply Improvement",
-        description:
-          "Apply a learned improvement suggestion to a skill or extension. " +
-          "This generates the necessary code changes based on outcome-based learnings.",
-        parameters: {
-          type: "object" as const,
-          properties: {
-            taskType: {
-              type: "string" as const,
-              description: "The task type with the improvement suggestion",
+        // ── foundry_pending_feedback ───────────────────────────────────────────
+        // List outcomes pending feedback collection
+        {
+          name: "foundry_pending_feedback",
+          label: "Pending Feedback",
+          description:
+            "List outcomes that are awaiting feedback collection. " +
+            "These are tasks that were tracked but haven't had metrics recorded yet.",
+          parameters: {
+            type: "object" as const,
+            properties: {
+              taskType: {
+                type: "string" as const,
+                description: "Filter by task type (optional)",
+              },
             },
-            confirm: {
-              type: "boolean" as const,
-              description: "Set to true to apply the changes (default: preview only)",
-            },
+            required: [] as string[],
           },
-          required: ["taskType"] as string[],
+          async execute(_toolCallId: string, params: unknown) {
+            const p = params as { taskType?: string };
+            const pending = learningEngine.getPendingFeedback(p.taskType);
+
+            if (pending.length === 0) {
+              return {
+                content: [
+                  {
+                    type: "text",
+                    text: "No outcomes pending feedback collection.",
+                  },
+                ],
+              };
+            }
+
+            let output = `## Pending Feedback Collection\n\n`;
+            output += `${pending.length} outcomes awaiting metrics:\n\n`;
+
+            for (const outcome of pending.slice(0, 10)) {
+              const age = Math.round(
+                (Date.now() - new Date(outcome.executedAt).getTime()) /
+                  (60 * 60 * 1000),
+              );
+              output += `- **${outcome.taskType}** (\`${outcome.id}\`)\n`;
+              output += `  - ${outcome.taskDescription.slice(0, 60)}...\n`;
+              output += `  - Executed: ${age}h ago\n`;
+            }
+
+            if (pending.length > 10) {
+              output += `\n...and ${pending.length - 10} more.`;
+            }
+
+            output += `\n\nUse \`foundry_record_feedback\` to record metrics for these outcomes.`;
+
+            return { content: [{ type: "text", text: output }] };
+          },
         },
-        async execute(_toolCallId: string, params: unknown) {
-          const p = params as { taskType: string; confirm?: boolean };
-          const insights = learningEngine.getTaskInsights(p.taskType);
 
-          if (!insights?.improvementSuggestion) {
-            return {
-              content: [{
-                type: "text",
-                text: `No improvement suggestion available for **${p.taskType}**.\n\n` +
-                  `Available suggestions:\n` +
-                  learningEngine.getImprovementSuggestions()
-                    .map(s => `- **${s.taskType}**: ${s.suggestion.suggestedChanges[0]}...`)
-                    .join("\n") || "None",
-              }],
-            };
-          }
+        // ── foundry_apply_improvement ──────────────────────────────────────────
+        // Apply learned improvements to skills/extensions
+        {
+          name: "foundry_apply_improvement",
+          label: "Apply Improvement",
+          description:
+            "Apply a learned improvement suggestion to a skill or extension. " +
+            "This generates the necessary code changes based on outcome-based learnings.",
+          parameters: {
+            type: "object" as const,
+            properties: {
+              taskType: {
+                type: "string" as const,
+                description: "The task type with the improvement suggestion",
+              },
+              confirm: {
+                type: "boolean" as const,
+                description:
+                  "Set to true to apply the changes (default: preview only)",
+              },
+            },
+            required: ["taskType"] as string[],
+          },
+          async execute(_toolCallId: string, params: unknown) {
+            const p = params as { taskType: string; confirm?: boolean };
+            const insights = learningEngine.getTaskInsights(p.taskType);
 
-          const suggestion = insights.improvementSuggestion;
+            if (!insights?.improvementSuggestion) {
+              return {
+                content: [
+                  {
+                    type: "text",
+                    text:
+                      `No improvement suggestion available for **${p.taskType}**.\n\n` +
+                        `Available suggestions:\n` +
+                        learningEngine
+                          .getImprovementSuggestions()
+                          .map(
+                            (s) =>
+                              `- **${s.taskType}**: ${s.suggestion.suggestedChanges[0]}...`,
+                          )
+                          .join("\n") || "None",
+                  },
+                ],
+              };
+            }
 
-          if (suggestion.appliedAt) {
-            return {
-              content: [{
-                type: "text",
-                text: `Improvement for **${p.taskType}** was already applied on ${suggestion.appliedAt}.`,
-              }],
-            };
-          }
+            const suggestion = insights.improvementSuggestion;
 
-          let output = `## Improvement Suggestion for ${p.taskType}\n\n`;
-          output += `**Confidence**: ${(suggestion.confidence * 100).toFixed(0)}%\n`;
-          output += `**Based on**: ${insights.totalTasks} tracked outcomes (${insights.successfulTasks} successful)\n\n`;
+            if (suggestion.appliedAt) {
+              return {
+                content: [
+                  {
+                    type: "text",
+                    text: `Improvement for **${p.taskType}** was already applied on ${suggestion.appliedAt}.`,
+                  },
+                ],
+              };
+            }
 
-          output += `**Suggested Changes**:\n`;
-          for (const change of suggestion.suggestedChanges) {
-            output += `- ${change}\n`;
-          }
-          output += `\n`;
+            let output = `## Improvement Suggestion for ${p.taskType}\n\n`;
+            output += `**Confidence**: ${(suggestion.confidence * 100).toFixed(0)}%\n`;
+            output += `**Based on**: ${insights.totalTasks} tracked outcomes (${insights.successfulTasks} successful)\n\n`;
 
-          if (suggestion.targetSkill) {
-            output += `**Target Skill**: ${suggestion.targetSkill}\n\n`;
-          }
-
-          if (p.confirm) {
-            // Generate improvement prompt for the LLM to implement
-            output += `---\n\n`;
-            output += `## Implementation Prompt\n\n`;
-            output += `Apply these improvements to the ${suggestion.targetSkill || p.taskType} skill/tool:\n\n`;
-
+            output += `**Suggested Changes**:\n`;
             for (const change of suggestion.suggestedChanges) {
-              output += `1. ${change}\n`;
+              output += `- ${change}\n`;
+            }
+            output += `\n`;
+
+            if (suggestion.targetSkill) {
+              output += `**Target Skill**: ${suggestion.targetSkill}\n\n`;
             }
 
-            output += `\nBased on outcome data:\n`;
-            output += `- Best performers had: ${insights.patterns.successful.slice(0, 2).join("; ")}\n`;
-            if (insights.patterns.unsuccessful.length > 0) {
-              output += `- Avoid: ${insights.patterns.unsuccessful[0]}\n`;
+            if (p.confirm) {
+              // Generate improvement prompt for the LLM to implement
+              output += `---\n\n`;
+              output += `## Implementation Prompt\n\n`;
+              output += `Apply these improvements to the ${suggestion.targetSkill || p.taskType} skill/tool:\n\n`;
+
+              for (const change of suggestion.suggestedChanges) {
+                output += `1. ${change}\n`;
+              }
+
+              output += `\nBased on outcome data:\n`;
+              output += `- Best performers had: ${insights.patterns.successful.slice(0, 2).join("; ")}\n`;
+              if (insights.patterns.unsuccessful.length > 0) {
+                output += `- Avoid: ${insights.patterns.unsuccessful[0]}\n`;
+              }
+
+              output += `\nUse \`foundry_extend_self\` or \`foundry_add_hook\` to implement these changes.\n`;
+              output += `After implementation, use \`foundry_restart\` to apply.\n\n`;
+
+              // Mark as applied (LLM is now responsible for implementing)
+              learningEngine.markImprovementApplied(p.taskType);
+              output += `✅ Improvement marked as applied.`;
+            } else {
+              output += `\nRun with \`confirm: true\` to generate the implementation prompt.`;
             }
 
-            output += `\nUse \`foundry_extend_self\` or \`foundry_add_hook\` to implement these changes.\n`;
-            output += `After implementation, use \`foundry_restart\` to apply.\n\n`;
-
-            // Mark as applied (LLM is now responsible for implementing)
-            learningEngine.markImprovementApplied(p.taskType);
-            output += `✅ Improvement marked as applied.`;
-          } else {
-            output += `\nRun with \`confirm: true\` to generate the implementation prompt.`;
-          }
-
-          return { content: [{ type: "text", text: output }] };
+            return { content: [{ type: "text", text: output }] };
+          },
         },
-      },
       ];
 
       return toolList;
@@ -4584,12 +5529,14 @@ ${p.hookCode}
 
 Based on your request, I've done similar workflows before:
 
-${suggestions.map(s => `- **${s.signature}** (${(s.confidence * 100).toFixed(0)}% match)\n  ${s.description}`).join("\n\n")}
+${suggestions.map((s) => `- **${s.signature}** (${(s.confidence * 100).toFixed(0)}% match)\n  ${s.description}`).join("\n\n")}
 
 I can follow one of these proven approaches, or we can try something new.
 
 `;
-          logger.info(`[foundry] Injected ${suggestions.length} workflow suggestions`);
+          logger.info(
+            `[foundry] Injected ${suggestions.length} workflow suggestions`,
+          );
         }
 
         // First-run onboarding
@@ -4616,8 +5563,8 @@ This is our first session! I'll start learning your workflows:
         learningsContext = `
 ## Learned Patterns
 
-${patterns.map(p => `- **${p.tool}**: ${p.error?.slice(0, 50)}... → ${p.resolution?.slice(0, 100)}`).join("\n")}
-${insights.map(i => `- **Insight**: ${i.context?.slice(0, 100)}`).join("\n")}
+${patterns.map((p) => `- **${p.tool}**: ${p.error?.slice(0, 50)}... → ${p.resolution?.slice(0, 100)}`).join("\n")}
+${insights.map((i) => `- **Insight**: ${i.context?.slice(0, 100)}`).join("\n")}
 
 `;
       }
@@ -4627,18 +5574,24 @@ ${insights.map(i => `- **Insight**: ${i.context?.slice(0, 100)}`).join("\n")}
       const overseerReport = learningEngine.getLastOverseerReport();
       let evolutionContext = "";
 
-      if (overseerReport?.evolutionCandidates && overseerReport.evolutionCandidates.length > 0) {
+      if (
+        overseerReport?.evolutionCandidates &&
+        overseerReport.evolutionCandidates.length > 0
+      ) {
         const topCandidates = overseerReport.evolutionCandidates.slice(0, 3);
         evolutionContext = `
 ## ⚠️ PROACTIVE EVOLUTION NEEDED
 
 The following tools are underperforming and may benefit from evolution:
 
-${topCandidates.map(t => {
-          const totalCalls = t.successCount + t.failureCount;
-          const avgLatency = totalCalls > 0 ? (t.totalLatencyMs / totalCalls).toFixed(0) : "N/A";
-          return `- **${t.toolName}**: ${(t.fitness * 100).toFixed(0)}% fitness (${t.successCount}/${totalCalls} success, avg ${avgLatency}ms)`;
-        }).join("\n")}
+${topCandidates
+  .map((t) => {
+    const totalCalls = t.successCount + t.failureCount;
+    const avgLatency =
+      totalCalls > 0 ? (t.totalLatencyMs / totalCalls).toFixed(0) : "N/A";
+    return `- **${t.toolName}**: ${(t.fitness * 100).toFixed(0)}% fitness (${t.successCount}/${totalCalls} success, avg ${avgLatency}ms)`;
+  })
+  .join("\n")}
 
 Consider using \`foundry_evolve\` to analyze and improve these tools, or investigate why they're failing.
 
@@ -4646,12 +5599,15 @@ Consider using \`foundry_evolve\` to analyze and improve these tools, or investi
       }
 
       // Include recurring failures that need attention
-      if (overseerReport?.recurringFailures && overseerReport.recurringFailures.length > 0) {
+      if (
+        overseerReport?.recurringFailures &&
+        overseerReport.recurringFailures.length > 0
+      ) {
         const topFailures = overseerReport.recurringFailures.slice(0, 2);
         evolutionContext += `
 ## 🔁 Recurring Failures
 
-${topFailures.map(f => `- **${f.signature}**: ${f.count}x failures - needs resolution pattern`).join("\n")}
+${topFailures.map((f) => `- **${f.signature}**: ${f.count}x failures - needs resolution pattern`).join("\n")}
 
 Consider using \`foundry_crystallize\` after resolving these to prevent future occurrences.
 
@@ -4673,7 +5629,11 @@ You have feedback data for: ${taskTypes.join(", ")}
           const typeInsights = learningEngine.getTaskInsights(taskType);
           if (typeInsights && typeInsights.recommendations.length > 0) {
             outcomeInsights += `**${taskType}** (${typeInsights.totalTasks} tracked, ${typeInsights.successfulTasks} successful):\n`;
-            outcomeInsights += typeInsights.recommendations.slice(0, 3).map(r => `- ${r}`).join("\n") + "\n\n";
+            outcomeInsights +=
+              typeInsights.recommendations
+                .slice(0, 3)
+                .map((r) => `- ${r}`)
+                .join("\n") + "\n\n";
           }
         }
 
@@ -4694,7 +5654,10 @@ Use \`foundry_track_outcome\` after executing tasks to continue learning.
       if (improvementSuggestions.length > 0) {
         outcomeInsights += `## 🔧 SKILL IMPROVEMENTS READY\n\n`;
         outcomeInsights += `Based on outcome data, these skills should be upgraded:\n\n`;
-        for (const { taskType, suggestion } of improvementSuggestions.slice(0, 2)) {
+        for (const { taskType, suggestion } of improvementSuggestions.slice(
+          0,
+          2,
+        )) {
           outcomeInsights += `- **${taskType}** (${(suggestion.confidence * 100).toFixed(0)}% confidence):\n`;
           for (const change of suggestion.suggestedChanges.slice(0, 2)) {
             outcomeInsights += `  - ${change}\n`;
@@ -4754,21 +5717,33 @@ When you need a new capability:
       // Track tool in current workflow
       learningEngine.trackWorkflowTool(toolName || "unknown");
 
-      const isError = error || (result && typeof result === "object" && (result as any).error);
+      const isError =
+        error ||
+        (result && typeof result === "object" && (result as any).error);
 
       // ADAS: Record tool execution metrics
-      learningEngine.recordToolExecution(toolName || "unknown", !isError, latencyMs);
+      learningEngine.recordToolExecution(
+        toolName || "unknown",
+        !isError,
+        latencyMs,
+      );
 
       if (isError) {
         const errorMsg = error || (result as any).error || "Unknown error";
-        const errorStr = typeof errorMsg === "string" ? errorMsg : JSON.stringify(errorMsg);
+        const errorStr =
+          typeof errorMsg === "string" ? errorMsg : JSON.stringify(errorMsg);
 
         // RISE: Check for existing pattern before recording new failure
-        const existingPattern = learningEngine.findSimilarPattern(toolName || "unknown", errorStr);
+        const existingPattern = learningEngine.findSimilarPattern(
+          toolName || "unknown",
+          errorStr,
+        );
 
         if (existingPattern && existingPattern.resolution) {
           // RISE: We have a learned pattern! Inject context for retry
-          logger.info(`[foundry] RISE: Injecting learned pattern for ${toolName}`);
+          logger.info(
+            `[foundry] RISE: Injecting learned pattern for ${toolName}`,
+          );
           learningEngine.recordPatternUse(existingPattern.id);
 
           // Track which pattern was injected so we can detect success
@@ -4795,26 +5770,34 @@ Apply this resolution to the current failure.
           toolName || "unknown",
           errorStr,
           ctx?.lastUserMessage?.slice(0, 200),
-          feedback
+          feedback,
         );
       } else {
         // RISE: Check if this success followed a pattern injection
         if (lastInjectedPatternId && lastInjectedForTool === toolName) {
           // Pattern was used and retry succeeded!
-          logger.info(`[foundry] RISE: Pattern ${lastInjectedPatternId} succeeded for ${toolName}`);
+          logger.info(
+            `[foundry] RISE: Pattern ${lastInjectedPatternId} succeeded for ${toolName}`,
+          );
           learningEngine.recordPatternSuccess(lastInjectedPatternId);
 
           // Check if pattern should be auto-crystallized
           const pattern = learningEngine.getPattern(lastInjectedPatternId);
           if (pattern && learningEngine.shouldAutoCrystallize(pattern)) {
-            logger.info(`[foundry] RISE: Auto-crystallizing pattern ${lastInjectedPatternId} after ${pattern.useCount} successful uses`);
+            logger.info(
+              `[foundry] RISE: Auto-crystallizing pattern ${lastInjectedPatternId} after ${pattern.useCount} successful uses`,
+            );
             // Trigger crystallization - write the hook
             const hookId = `rise_crystallized_${pattern.tool}_${Date.now()}`;
             const hooksDir = join(dataDir, "hooks");
             if (!existsSync(hooksDir)) mkdirSync(hooksDir, { recursive: true });
 
-            const escapedError = (pattern.error || "").replace(/`/g, "'").slice(0, 100);
-            const escapedResolution = (pattern.resolution || "").replace(/`/g, "'").slice(0, 200);
+            const escapedError = (pattern.error || "")
+              .replace(/`/g, "'")
+              .slice(0, 100);
+            const escapedResolution = (pattern.resolution || "")
+              .replace(/`/g, "'")
+              .slice(0, 200);
 
             const hookCode = `
     // RISE auto-crystallized from pattern: ${pattern.id}
@@ -4836,7 +5819,9 @@ ${escapedResolution}
             const hookPath = join(hooksDir, `${hookId}.ts`);
             writeFileSync(hookPath, hookCode);
             learningEngine.markCrystallized(lastInjectedPatternId, hookId);
-            logger.info(`[foundry] RISE: Wrote crystallized hook to ${hookPath}`);
+            logger.info(
+              `[foundry] RISE: Wrote crystallized hook to ${hookPath}`,
+            );
           }
 
           lastInjectedPatternId = null;
@@ -4845,7 +5830,10 @@ ${escapedResolution}
 
         // Record success and potential resolution
         if (lastFailureId && toolName) {
-          learningEngine.recordResolution(lastFailureId, `Succeeded after retry with ${toolName}`);
+          learningEngine.recordResolution(
+            lastFailureId,
+            `Succeeded after retry with ${toolName}`,
+          );
           lastFailureId = null;
         }
       }
@@ -4857,15 +5845,23 @@ ${escapedResolution}
       const { outcome, toolsUsed } = event;
 
       // Complete workflow recording
-      const workflowOutcome = outcome === "success" ? "success" : outcome === "failure" ? "failure" : "partial";
-      learningEngine.completeWorkflow(workflowOutcome, ctx?.summary?.slice(0, 200) || "");
+      const workflowOutcome =
+        outcome === "success"
+          ? "success"
+          : outcome === "failure"
+            ? "failure"
+            : "partial";
+      learningEngine.completeWorkflow(
+        workflowOutcome,
+        ctx?.summary?.slice(0, 200) || "",
+      );
 
       if (outcome === "success" && toolsUsed?.length > 2) {
         // Record successful tool combinations
         const combo = toolsUsed.slice(0, 5).join(" → ");
         learningEngine.recordInsight(
           `Successful tool sequence: ${combo}`,
-          ctx?.summary?.slice(0, 200)
+          ctx?.summary?.slice(0, 200),
         );
       }
 
@@ -4881,7 +5877,9 @@ ${escapedResolution}
       "restart resume",
     ].join(", ");
     logger.info(`[foundry] Plugin registered (${features})`);
-    logger.info(`[foundry] Written: ${writer.getExtensions().length} extensions, ${writer.getSkills().length} skills`);
+    logger.info(
+      `[foundry] Written: ${writer.getExtensions().length} extensions, ${writer.getSkills().length} skills`,
+    );
     logger.info(`[foundry] Learnings: ${learningEngine.getLearningsSummary()}`);
 
     // Check for pending session on startup
@@ -4894,7 +5892,9 @@ ${escapedResolution}
     // Runs every hour to auto-crystallize patterns and report recurring failures
     // Run immediately once to populate lastOverseerReport for proactive evolution injection
     const initialReport = learningEngine.runOverseer(dataDir);
-    logger.info(`[foundry] Initial overseer run: ${initialReport.evolutionCandidates.length} evolution candidates, ${initialReport.recurringFailures.length} recurring failures`);
+    logger.info(
+      `[foundry] Initial overseer run: ${initialReport.evolutionCandidates.length} evolution candidates, ${initialReport.recurringFailures.length} recurring failures`,
+    );
 
     learningEngine.startOverseer(60 * 60 * 1000, dataDir);
     logger.info(`[foundry] Autonomous overseer scheduled (1h interval)`);

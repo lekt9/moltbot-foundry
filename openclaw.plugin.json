@@ -25,28 +25,67 @@
         "type": "object",
         "additionalProperties": false,
         "properties": {
-          "arxiv": { "type": "boolean", "description": "Learn from arXiv papers", "default": true },
-          "github": { "type": "boolean", "description": "Learn from GitHub repos", "default": true },
-          "docs": { "type": "boolean", "description": "Learn from OpenClaw documentation", "default": true },
-          "experience": { "type": "boolean", "description": "Learn from own successes/failures", "default": true }
+          "arxiv": {
+            "type": "boolean",
+            "description": "Learn from arXiv papers",
+            "default": true
+          },
+          "github": {
+            "type": "boolean",
+            "description": "Learn from GitHub repos",
+            "default": true
+          },
+          "docs": {
+            "type": "boolean",
+            "description": "Learn from OpenClaw documentation",
+            "default": true
+          },
+          "experience": {
+            "type": "boolean",
+            "description": "Learn from own successes/failures",
+            "default": true
+          }
         }
       },
       "marketplace": {
         "type": "object",
         "additionalProperties": false,
         "properties": {
-          "url": { "type": "string", "description": "Foundry marketplace URL", "default": "https://api.forge.getfoundry.app" },
-          "autoPublish": { "type": "boolean", "description": "Auto-publish high-value patterns", "default": false }
+          "url": {
+            "type": "string",
+            "description": "Foundry marketplace URL",
+            "default": "https://api.claw.getfoundry.app"
+          },
+          "autoPublish": {
+            "type": "boolean",
+            "description": "Auto-publish high-value patterns",
+            "default": false
+          }
         }
       }
     }
   },
   "uiHints": {
-    "dataDir": { "label": "Data Directory", "placeholder": "~/.openclaw/foundry" },
-    "openclawPath": { "label": "OpenClaw Path", "placeholder": "/path/to/openclaw" },
-    "autoLearn": { "label": "Auto-Learn", "help": "Automatically learn from agent activity" },
-    "sources.docs": { "label": "Learn from Docs", "help": "Fetch and learn from OpenClaw documentation" },
+    "dataDir": {
+      "label": "Data Directory",
+      "placeholder": "~/.openclaw/foundry"
+    },
+    "openclawPath": {
+      "label": "OpenClaw Path",
+      "placeholder": "/path/to/openclaw"
+    },
+    "autoLearn": {
+      "label": "Auto-Learn",
+      "help": "Automatically learn from agent activity"
+    },
+    "sources.docs": {
+      "label": "Learn from Docs",
+      "help": "Fetch and learn from OpenClaw documentation"
+    },
     "marketplace.url": { "label": "Marketplace URL", "sensitive": false },
-    "marketplace.autoPublish": { "label": "Auto-Publish", "help": "Automatically share high-value patterns" }
+    "marketplace.autoPublish": {
+      "label": "Auto-Publish",
+      "help": "Automatically share high-value patterns"
+    }
   }
 }

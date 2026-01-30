@@ -38,10 +38,13 @@ export interface SearchResult {
   total: number;
 }
 
-const API_BASE = "https://api.forge.getfoundry.app";
+const API_BASE = "https://api.claw.getfoundry.app";
 
 /** Search skills (free). */
-export async function searchSkills(query: string, limit = 20): Promise<SearchResult> {
+export async function searchSkills(
+  query: string,
+  limit = 20,
+): Promise<SearchResult> {
   const url = new URL(`${API_BASE}/skills/search`);
   if (query) url.searchParams.set("q", query);
   url.searchParams.set("limit", String(limit));
@@ -53,7 +56,9 @@ export async function searchSkills(query: string, limit = 20): Promise<SearchRes
 
 /** Get skill summary with endpoints (free). */
 export async function getSkillSummary(id: string): Promise<SkillDetail> {
-  const resp = await fetch(`${API_BASE}/skills/${encodeURIComponent(id)}/summary`);
+  const resp = await fetch(
+    `${API_BASE}/skills/${encodeURIComponent(id)}/summary`,
+  );
   if (!resp.ok) throw new Error(`Summary failed: ${resp.status}`);
   return resp.json();
 }
@@ -73,7 +78,9 @@ export async function downloadSkill(
   publicKey: string,
 ): Promise<SkillPackage> {
   // Step 1: Initial request — expect 402 (or 200 in dev mode)
-  const resp = await fetch(`${API_BASE}/skills/${encodeURIComponent(id)}/download`);
+  const resp = await fetch(
+    `${API_BASE}/skills/${encodeURIComponent(id)}/download`,
+  );
 
   if (resp.ok) {
     return resp.json();
@@ -90,12 +97,19 @@ export async function downloadSkill(
   if (!accepts) throw new Error("Invalid 402 response");
 
   // Step 3: Build + sign transaction
-  const paymentData = await buildPaymentTransaction(accepts, signTransaction, publicKey);
+  const paymentData = await buildPaymentTransaction(
+    accepts,
+    signTransaction,
+    publicKey,
+  );
 
   // Step 4: Retry with payment
-  const retryResp = await fetch(`${API_BASE}/skills/${encodeURIComponent(id)}/download`, {
-    headers: { "X-Payment": paymentData },
-  });
+  const retryResp = await fetch(
+    `${API_BASE}/skills/${encodeURIComponent(id)}/download`,
+    {
+      headers: { "X-Payment": paymentData },
+    },
+  );
 
   if (!retryResp.ok) {
     const text = await retryResp.text().catch(() => "");
@@ -121,14 +135,11 @@ async function buildPaymentTransaction(
   payerPublicKey: string,
 ): Promise<string> {
   // Dynamic import to avoid bundling @solana/web3.js upfront
-  const {
-    Connection,
-    PublicKey,
-    Transaction,
-    TransactionInstruction,
-  } = await import("@solana/web3.js");
-  const { getAssociatedTokenAddress, createTransferInstruction } =
-    await import("@solana/spl-token");
+  const { Connection, PublicKey, Transaction, TransactionInstruction } =
+    await import("@solana/web3.js");
+  const { getAssociatedTokenAddress, createTransferInstruction } = await import(
+    "@solana/spl-token"
+  );
 
   const isDevnet = accepts.network?.includes("devnet");
   const rpcUrl = isDevnet
@@ -146,7 +157,10 @@ async function buildPaymentTransaction(
 
   // Token accounts
   const payerTokenAccount = await getAssociatedTokenAddress(usdcMint, payer);
-  const recipientTokenAccount = await getAssociatedTokenAddress(usdcMint, recipient);
+  const recipientTokenAccount = await getAssociatedTokenAddress(
+    usdcMint,
+    recipient,
+  );
 
   // Nonce
   const nonce = BigInt(Date.now());
