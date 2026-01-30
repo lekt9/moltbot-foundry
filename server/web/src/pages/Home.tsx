@@ -46,8 +46,8 @@ export function Home() {
           The <span className="highlight">Forge</span> Marketplace
         </h1>
         <p className="hero-subtitle">
-          Skills marketplace for <a href="https://openclaw.ai" target="_blank" rel="noopener noreferrer" className="hero-link">OpenClaw</a>—the
-          first AI agent framework that improves itself. Browse free, download with USDC.
+          Marketplace for <a href="https://openclaw.ai" target="_blank" rel="noopener noreferrer" className="hero-link">OpenClaw</a> skills
+          built by Foundry—the self-writing extension that improves itself. Browse free, download with USDC.
         </p>
 
         {/* Search */}

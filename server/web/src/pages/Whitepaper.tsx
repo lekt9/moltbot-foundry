@@ -4,9 +4,9 @@ export function Whitepaper() {
       <article className="whitepaper-content">
         <header className="whitepaper-header">
           <div className="whitepaper-badge">Research</div>
-          <h1>The Case for a Self-Improving OpenClaw</h1>
+          <h1>The Forge That Forges Itself</h1>
           <p className="whitepaper-subtitle">
-            How Foundry makes the open-source AI agent framework that rewrites itself
+            How Foundry writes code into itself—and builds capabilities for OpenClaw
           </p>
           <div className="whitepaper-meta">
             <span>Foundry Labs</span>
@@ -18,14 +18,12 @@ export function Whitepaper() {
         <section className="whitepaper-abstract">
           <h2>Abstract</h2>
           <p>
-            <a href="https://openclaw.ai" target="_blank" rel="noopener noreferrer">OpenClaw</a> is
-            an open-source AI agent framework that runs locally, connects to your tools, and lets you
-            build custom workflows through extensions, hooks, and skills. But like every agent framework,
-            it's static—humans design the capabilities. Foundry changes that. It's an OpenClaw extension
-            that writes other OpenClaw extensions. When the system encounters a failure, it researches
-            the docs, writes a fix, and deploys it. OpenClaw becomes permanently better. This paper presents
-            the research foundations, implementation architecture, and economic model powering the first
-            self-improving AI agent framework.
+            Foundry is a self-writing meta-extension for <a href="https://openclaw.ai" target="_blank" rel="noopener noreferrer">OpenClaw</a>.
+            It doesn't just write code for you—it writes code <em>into itself</em>. When Foundry encounters
+            a failure, it researches docs, writes a fix, and deploys it as part of its own codebase.
+            Each fix makes Foundry better at writing fixes. It also writes extensions, skills, and hooks
+            for the OpenClaw platform. This paper presents the research foundations, implementation
+            architecture, and economic model powering the first AI extension that improves itself.
           </p>
         </section>
 
@@ -38,16 +36,16 @@ export function Whitepaper() {
             to agent architecture itself.
           </p>
           <p>
-            Consider two approaches to building AI agent frameworks:
+            Consider two approaches to building AI extensions:
           </p>
           <div className="comparison-table">
             <div className="comparison-row comparison-header">
-              <div>Traditional Agent Frameworks</div>
-              <div>Self-Improving OpenClaw</div>
+              <div>Traditional Extensions</div>
+              <div>Foundry</div>
             </div>
             <div className="comparison-row">
-              <div>Humans write extensions</div>
-              <div>System writes its own extensions</div>
+              <div>Humans write the code</div>
+              <div>System writes code into itself</div>
             </div>
             <div className="comparison-row">
               <div>Each fix is isolated</div>
@@ -63,8 +61,10 @@ export function Whitepaper() {
             </div>
           </div>
           <p>
-            Foundry applies the Bitter Lesson to <a href="https://openclaw.ai" target="_blank" rel="noopener noreferrer">OpenClaw</a> itself:
-            rather than hand-designing extensions and capabilities, let the system discover and implement them autonomously.
+            Foundry applies the Bitter Lesson to itself: rather than hand-designing capabilities,
+            let the system discover and implement them autonomously—writing code into its own codebase.
+            It runs on <a href="https://openclaw.ai" target="_blank" rel="noopener noreferrer">OpenClaw</a> and
+            can also write extensions, skills, and hooks for the platform.
           </p>
         </section>
 
@@ -132,20 +132,37 @@ export function Whitepaper() {
         </section>
 
         <section>
-          <h2>3. Why OpenClaw?</h2>
+          <h2>3. OpenClaw vs Foundry</h2>
           <p>
             <a href="https://openclaw.ai" target="_blank" rel="noopener noreferrer">OpenClaw</a> is
-            the right substrate for recursive self-improvement because of its architecture:
+            the platform—an agent runtime with gateway, channels, memory, and tool execution.
+            <strong> OpenClaw doesn't have built-in self-learning.</strong> Foundry adds that capability on top.
           </p>
-          <ul>
-            <li><strong>Open source</strong> — The entire codebase is inspectable. No black boxes. Users can verify what Foundry writes before deploying.</li>
-            <li><strong>Local-first</strong> — Runs on your machine. Your data stays yours. Self-improvement happens in your environment, on your terms.</li>
-            <li><strong>Extension architecture</strong> — Clean separation between core and capabilities. Extensions are sandboxed. A bad extension can't corrupt the core.</li>
-            <li><strong>Composable primitives</strong> — Hooks, tools, skills, and extensions can be combined. Foundry can write small pieces that compose into complex capabilities.</li>
-            <li><strong>Documentation-driven</strong> — docs.openclaw.ai provides the patterns Foundry needs to learn. The framework teaches itself.</li>
-          </ul>
+          <div className="comparison-table">
+            <div className="comparison-row comparison-header">
+              <div>OpenClaw (Platform)</div>
+              <div>Foundry (Plugin)</div>
+            </div>
+            <div className="comparison-row">
+              <div>Gateway, channels, memory</div>
+              <div>Researches docs, writes code</div>
+            </div>
+            <div className="comparison-row">
+              <div>Tool execution, skill loading</div>
+              <div>Learning engine, pattern recognition</div>
+            </div>
+            <div className="comparison-row">
+              <div>Infrastructure everything runs on</div>
+              <div>Modifies itself via foundry_extend_self</div>
+            </div>
+            <div className="comparison-row">
+              <div>No self-improvement</div>
+              <div>Recursive self-improvement</div>
+            </div>
+          </div>
           <p>
-            Most agent frameworks are closed, cloud-hosted, or monolithic. OpenClaw's architecture was built for extensibility. Foundry exploits that.
+            Foundry is an "agent that builds agents"—it uses OpenClaw's infrastructure to create new
+            capabilities, both for itself and for the platform.
           </p>
         </section>
 
@@ -157,7 +174,7 @@ export function Whitepaper() {
 
           <div className="architecture-diagram">
             <pre>{`
-  OpenClaw encounters failure
+  Foundry encounters failure
        │
        ▼
   ┌─────────────────┐
@@ -176,8 +193,8 @@ export function Whitepaper() {
            │
            ▼
   ┌─────────────────┐
-  │ Deploy to       │  ← installs to ~/.openclaw/extensions/
-  │ OpenClaw        │
+  │ Deploy to Self  │  ← code becomes part of Foundry
+  │ or OpenClaw     │  ← or writes to ~/.openclaw/extensions/
   └────────┬────────┘
            │
            ▼
@@ -185,7 +202,7 @@ export function Whitepaper() {
   │  Pattern Learn  │  ← records failure→resolution mappings
   └────────┬────────┘
            │
-           └──────────► OpenClaw is now better
+           └──────────► Foundry is now better
                               │
                               ▼
                         Repeat
@@ -194,13 +211,13 @@ export function Whitepaper() {
 
           <h3>4.1 The Improvement Loop</h3>
           <ol className="improvement-loop">
-            <li><strong>Observe failure</strong> — OpenClaw encounters an API error, parsing issue, or missing capability</li>
-            <li><strong>Research solution</strong> — Foundry queries docs.openclaw.ai to understand patterns and APIs</li>
-            <li><strong>Write capability</strong> — Generates a new hook, tool, skill, or full extension</li>
+            <li><strong>Observe failure</strong> — Foundry encounters an error or limitation</li>
+            <li><strong>Research solution</strong> — Queries docs.openclaw.ai to understand patterns</li>
+            <li><strong>Write capability</strong> — Generates a new hook, tool, or extension</li>
             <li><strong>Validate in sandbox</strong> — Tests code in isolation before deployment</li>
-            <li><strong>Deploy to OpenClaw</strong> — New capability is installed in ~/.openclaw/extensions/</li>
+            <li><strong>Deploy to self</strong> — Code becomes part of Foundry (or writes to OpenClaw)</li>
             <li><strong>Record pattern</strong> — The failure→resolution mapping is stored</li>
-            <li><strong>OpenClaw is now better</strong> — Permanently. The fix persists across sessions.</li>
+            <li><strong>Foundry is now better</strong> — At handling this class of problem. Permanently.</li>
           </ol>
           <p>
             This mirrors the HexMachina insight: each generated artifact (hook, tool, pattern) is
@@ -272,18 +289,18 @@ export function Whitepaper() {
 
           <h3>5.3 Network Effects</h3>
           <p>
-            Each skill published improves the collective capability of all OpenClaw instances:
+            Each skill published improves the collective capability of all Foundry instances:
           </p>
           <ul>
-            <li>Creator A publishes a Stripe integration skill for OpenClaw</li>
-            <li>Creator B's OpenClaw downloads it, can now handle payments</li>
-            <li>Creator B discovers an edge case, publishes a pattern fix</li>
-            <li>Creator A's OpenClaw learns from the pattern</li>
-            <li>Both OpenClaw instances are now better at payment handling</li>
+            <li>Creator A's Foundry writes a Stripe integration skill</li>
+            <li>Creator B downloads it for their OpenClaw setup</li>
+            <li>Creator B's Foundry discovers an edge case, publishes a pattern fix</li>
+            <li>Creator A's Foundry learns from the pattern</li>
+            <li>Both Foundries are now better at writing payment integrations</li>
           </ul>
           <p>
-            This is <em>collective recursive self-improvement</em>: a network of agents that make each
-            other better.
+            This is <em>collective recursive self-improvement</em>: a network of Foundry instances
+            that make each other better.
           </p>
         </section>
 
@@ -331,14 +348,14 @@ export function Whitepaper() {
         <section>
           <h2>7. The Bet</h2>
           <p>
-            Traditional software development: humans improve software → software does more.
+            Traditional software: humans improve software → software does more.
           </p>
           <p>
-            OpenClaw + Foundry: software improves software → software improves <em>faster</em>.
+            Foundry: software improves software → software improves <em>faster</em>.
           </p>
           <p>
-            This is the core thesis. If an agent framework can write extensions that make itself better at
-            writing extensions, improvement compounds. Each capability acquisition makes the next acquisition easier.
+            This is the core thesis. If an extension can write code that makes itself better at
+            writing code, improvement compounds. Each capability acquisition makes the next acquisition easier.
             The system's growth rate accelerates over time.
           </p>
           <p>
@@ -347,11 +364,12 @@ export function Whitepaper() {
             showed artifact preservation enables long-horizon learning.
           </p>
           <p>
-            Foundry combines these insights with OpenClaw's extension architecture and an economic layer
-            (x402/Forge) that incentivizes sharing improvements across a network of agents.
+            Foundry combines these insights with an economic layer (x402/Forge) that incentivizes
+            sharing improvements. It runs on OpenClaw and writes capabilities for the platform—but
+            the recursive loop is about Foundry improving itself.
           </p>
           <p className="thesis-statement">
-            <strong>The first AI agent framework that improves itself—every fix makes the fixer better.</strong>
+            <strong>The first AI extension that improves itself—every fix makes the fixer better.</strong>
           </p>
         </section>
 
