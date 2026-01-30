@@ -4,7 +4,7 @@
 
 [![FDRY](https://img.shields.io/badge/FDRY-Solana-9945FF)](https://dexscreener.com/solana/2jc1lpgy1zjl9uertfdmtnm4kc2ahhydk4tqqqgbjdhh)
 
-Foundry is a self-writing meta-extension for [Clawdbot](https://github.com/lekt9/clawdbot) that can research documentation, learn from failures, and write new capabilities into itself and other extensions.
+Foundry is a self-writing meta-extension for [OpenClaw](https://github.com/lekt9/openclaw) that can research documentation, learn from failures, and write new capabilities into itself and other extensions.
 
 **$FDRY** — [dexscreener](https://dexscreener.com/solana/2jc1lpgy1zjl9uertfdmtnm4kc2ahhydk4tqqqgbjdhh) · Solana
 
@@ -19,6 +19,7 @@ Foundry is a self-writing meta-extension for [Clawdbot](https://github.com/lekt9
 │    arXiv papers   insights  tools       isolated   restart  │
 │    GitHub repos   failures  hooks       process    resume   │
 │                            skills                           │
+│                            browser                          │
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -83,10 +84,19 @@ This is **recursive self-improvement** — each capability makes acquiring the n
 ## Features
 
 ### Self-Writing Code Generation
-- Writes Clawdbot extensions with tools and hooks
-- Generates API skills from documentation
+- Writes OpenClaw extensions with tools and hooks
+- Generates API skills following AgentSkills format with YAML frontmatter
+- Generates browser automation skills with CDP integration
+- Generates standalone hooks with HOOK.md + handler.ts pattern
 - Can extend itself with new capabilities
 - Validates code in isolated sandbox before deployment
+
+### Native OpenClaw Integration
+- **AgentSkills Format**: Proper YAML frontmatter with metadata (emoji, requires, events)
+- **Browser Automation**: CDP-based browser tool integration for authenticated workflows
+- **Skill Gating**: Auto-generates requires.config, requires.bins, requires.env for dependencies
+- **Hook System**: Full support for OpenClaw hook events (gateway:startup, command:new, etc.)
+- **ClawdHub Ready**: Skills can be published to the ClawdHub registry
 
 ### Proactive Learning
 - Records tool failures and successful resolutions
@@ -108,26 +118,26 @@ This is **recursive self-improvement** — each capability makes acquiring the n
 ## Installation
 
 ```bash
-# Clone into your clawdbot extensions directory
-git clone https://github.com/lekt9/moltbot-foundry ~/.clawdbot/extensions/foundry
+# Clone into your OpenClaw extensions directory
+git clone https://github.com/lekt9/moltbot-foundry ~/.openclaw/extensions/foundry
 
 # Install dependencies
-cd ~/.clawdbot/extensions/foundry
+cd ~/.openclaw/extensions/foundry
 npm install
 
-# Add to clawdbot.json
+# Add to openclaw.json
 {
   "plugins": {
     "load": {
       "paths": [
-        "~/.clawdbot/extensions/foundry"
+        "~/.openclaw/extensions/foundry"
       ]
     }
   }
 }
 
 # Restart gateway
-clawdbot gateway restart
+openclaw gateway restart
 ```
 
 ## Tools
@@ -145,8 +155,10 @@ clawdbot gateway restart
 | Tool | Description |
 |------|-------------|
 | `foundry_implement` | Research + implement a capability end-to-end |
-| `foundry_write_extension` | Write a new Clawdbot extension with tools/hooks |
+| `foundry_write_extension` | Write a new OpenClaw extension with tools/hooks |
 | `foundry_write_skill` | Write an API skill package (SKILL.md + api.ts) |
+| `foundry_write_browser_skill` | Write a browser automation skill with CDP integration |
+| `foundry_write_hook` | Write a standalone hook (HOOK.md + handler.ts) |
 | `foundry_add_tool` | Add a tool to an existing extension |
 | `foundry_add_hook` | Add a hook to an existing extension |
 | `foundry_extend_self` | Add capabilities to Foundry itself |
@@ -159,6 +171,21 @@ clawdbot gateway restart
 | `foundry_restart` | Restart gateway with context preservation |
 | `foundry_publish_ability` | Publish patterns/extensions to Foundry Marketplace |
 | `foundry_marketplace` | Search, browse leaderboard, and install abilities |
+
+## Bundled Skills
+
+Foundry ships with built-in skills that are automatically available:
+
+### `foundry-browser-helper`
+Helper skill for browser automation patterns. Provides guidance on using the OpenClaw `browser` tool effectively.
+
+```
+# Quick reference
+browser open https://example.com
+browser snapshot           # AI-readable format
+browser click ref=btn_submit
+browser type ref=input_email "user@example.com"
+```
 
 ## How It Works
 
@@ -192,10 +219,61 @@ Foundry:
 ### 4. Deployment Phase
 ```
 Foundry:
-  1. Writes to ~/.clawdbot/extensions/
-  2. Creates clawdbot.plugin.json
+  1. Writes to ~/.openclaw/extensions/
+  2. Creates openclaw.plugin.json
   3. Triggers gateway restart
   4. Resumes conversation automatically
+```
+
+## Skill Generation
+
+Foundry generates skills in the AgentSkills format with proper YAML frontmatter:
+
+```yaml
+---
+name: my-api-skill
+description: Integrates with My API service
+metadata: {"openclaw":{"emoji":"🔌","requires":{"env":["MY_API_KEY"]}}}
+---
+
+# My API Skill
+
+## Authentication
+This skill requires the `MY_API_KEY` environment variable.
+
+## Endpoints
+- `GET /users` - List all users
+- `POST /users` - Create a new user
+```
+
+### Browser Skills
+
+Browser automation skills automatically gate on `browser.enabled`:
+
+```yaml
+---
+name: my-browser-skill
+description: Automates login workflow
+metadata: {"openclaw":{"emoji":"🌐","requires":{"config":["browser.enabled"]}}}
+---
+
+# My Browser Skill
+
+## Workflow
+1. Open login page
+2. Fill credentials
+3. Submit form
+4. Verify success
+```
+
+### Standalone Hooks
+
+Hooks follow the HOOK.md + handler.ts pattern:
+
+```
+my-hook/
+├── HOOK.md          # Frontmatter + documentation
+└── handler.ts       # Event handler code
 ```
 
 ## Proactive Learning
@@ -241,7 +319,7 @@ Generated code is validated before deployment:
 ```
 1. Write extension to temp directory
 2. Spawn isolated Node process with tsx
-3. Mock Clawdbot API
+3. Mock OpenClaw API
 4. Try to import and run register()
 5. If fails → reject with error message
 6. If passes → deploy to real extensions directory
@@ -271,7 +349,7 @@ foundry_marketplace action="install" id="abc123"
 |------|-------|-------------|
 | Pattern | FREE | Error resolution patterns (crowdsourced) |
 | Technique | $0.02 | Reusable code snippets |
-| Extension | $0.05 | Full Clawdbot plugins |
+| Extension | $0.05 | Full OpenClaw plugins |
 | Agent | $0.10 | High-fitness agent designs |
 
 ## Configuration
@@ -283,13 +361,18 @@ foundry_marketplace action="install" id="abc123"
       "foundry": {
         "enabled": true,
         "config": {
-          "dataDir": "~/.clawdbot/foundry",
+          "dataDir": "~/.openclaw/foundry",
+          "openclawPath": "/path/to/openclaw",
           "autoLearn": true,
           "sources": {
             "docs": true,
             "experience": true,
             "arxiv": false,
             "github": false
+          },
+          "marketplace": {
+            "url": "https://skills.molt.bot",
+            "autoPublish": false
           }
         }
       }
@@ -297,6 +380,20 @@ foundry_marketplace action="install" id="abc123"
   }
 }
 ```
+
+### Config Options
+
+| Option | Description | Default |
+|--------|-------------|---------|
+| `dataDir` | Directory to store forged artifacts | `~/.openclaw/foundry` |
+| `openclawPath` | Path to OpenClaw installation for local docs | - |
+| `autoLearn` | Automatically learn from agent activity | `true` |
+| `sources.docs` | Learn from OpenClaw documentation | `true` |
+| `sources.experience` | Learn from own successes/failures | `true` |
+| `sources.arxiv` | Learn from arXiv papers | `true` |
+| `sources.github` | Learn from GitHub repos | `true` |
+| `marketplace.url` | Foundry marketplace URL | `https://skills.molt.bot` |
+| `marketplace.autoPublish` | Auto-publish high-value patterns | `false` |
 
 ## Research Foundations
 
@@ -329,10 +426,30 @@ Foundry's self-improvement mechanisms draw from recent advances in autonomous le
 
 Foundry operationalizes this: the system that writes the code IS the code being written.
 
+## Key Directories
+
+```
+~/.openclaw/foundry/            — Data directory (learnings, patterns)
+~/.openclaw/extensions/         — Generated extensions go here
+~/.openclaw/skills/             — Generated skills go here
+~/.openclaw/hooks/foundry-resume/ — Restart resume hook
+```
+
+## Development
+
+```bash
+# Type check
+npx tsc --noEmit
+
+# Test extension locally
+openclaw gateway restart
+tail -f ~/.openclaw/logs/gateway.log | grep foundry
+```
+
 ## License
 
 MIT
 
 ---
 
-*Built with Clawdbot. Forged by Foundry.*
+*Built with OpenClaw. Forged by Foundry.*
