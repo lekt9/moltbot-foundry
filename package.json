@@ -1,9 +1,37 @@
 {
-  "name": "foundry",
-  "version": "0.1.0",
+  "name": "@lekt9/foundry",
+  "version": "0.2.0",
   "description": "The forge that forges itself — self-writing meta-extension for OpenClaw",
   "type": "module",
   "main": "index.ts",
+  "keywords": [
+    "openclaw",
+    "moltbot",
+    "clawdbot",
+    "foundry",
+    "self-writing",
+    "meta-extension",
+    "ai-agent",
+    "code-generation",
+    "plugin"
+  ],
+  "author": "Foundry <hello@getfoundry.app>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/lekt9/openclaw-foundry"
+  },
+  "homepage": "https://getfoundry.app",
+  "moltbot": {
+    "extensions": [
+      "./index.ts"
+    ]
+  },
+  "openclaw": {
+    "extensions": [
+      "./index.ts"
+    ]
+  },
   "clawdbot": {
     "extensions": [
       "./index.ts"
@@ -19,6 +47,13 @@
     "typescript": "^5.0.0"
   },
   "peerDependencies": {
+    "moltbot": "*",
+    "openclaw": "*",
     "clawdbot": "*"
+  },
+  "peerDependenciesMeta": {
+    "moltbot": { "optional": true },
+    "openclaw": { "optional": true },
+    "clawdbot": { "optional": true }
   }
 }

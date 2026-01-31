@@ -186,7 +186,35 @@ This is **recursive self-improvement** — each capability makes acquiring the n
 
 ## Installation
 
-### Option A: Config Only (Recommended)
+### Just Ask (Easiest)
+
+If you have OpenClaw running, just say:
+
+```
+"Install the Foundry plugin"
+```
+
+The agent will handle the rest.
+
+### Option A: npm (Recommended)
+
+```bash
+npm install -g @lekt9/foundry
+```
+
+Then add to `~/.openclaw/openclaw.json`:
+
+```json
+{
+  "plugins": {
+    "entries": {
+      "foundry": { "enabled": true }
+    }
+  }
+}
+```
+
+### Option C: GitHub Source
 
 Add to `~/.openclaw/openclaw.json`:
 
@@ -203,22 +231,21 @@ Add to `~/.openclaw/openclaw.json`:
 }
 ```
 
-Restart the gateway:
-```bash
-openclaw gateway restart
-```
-
-### Option B: Nix (Reproducible)
+### Option D: Nix (Reproducible)
 
 ```bash
 nix run github:lekt9/openclaw-foundry
 ```
 
-### Option C: Manual Clone
+### Option E: Manual Clone
 
 ```bash
 git clone https://github.com/lekt9/openclaw-foundry ~/.openclaw/extensions/foundry
 cd ~/.openclaw/extensions/foundry && npm install
+```
+
+Then restart:
+```bash
 openclaw gateway restart
 ```
 

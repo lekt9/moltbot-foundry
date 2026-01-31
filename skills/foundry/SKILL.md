@@ -12,9 +12,32 @@ metadata: {"openclaw":{"requires":{"bins":["node"]},"repository":"github:lekt9/o
 
 ## Quick Start
 
-### Option A: Config Only (Recommended)
+### Just Ask (Easiest)
+
+```
+"Install the Foundry plugin"
+```
+
+The agent will handle the rest.
+
+### Option A: npm (Recommended)
+
+```bash
+npm install -g @lekt9/foundry
+```
 
 Add to `~/.openclaw/openclaw.json`:
+```json
+{
+  "plugins": {
+    "entries": {
+      "foundry": { "enabled": true }
+    }
+  }
+}
+```
+
+### Option B: GitHub Source
 
 ```json
 {
@@ -29,23 +52,10 @@ Add to `~/.openclaw/openclaw.json`:
 }
 ```
 
-Restart the gateway:
-```bash
-openclaw gateway restart
-```
-
-### Option B: Nix (Reproducible)
+### Option C: Nix
 
 ```bash
 nix run github:lekt9/openclaw-foundry
-```
-
-### Option C: Manual Clone
-
-```bash
-git clone https://github.com/lekt9/openclaw-foundry ~/.openclaw/extensions/foundry
-cd ~/.openclaw/extensions/foundry && npm install
-openclaw gateway restart
 ```
 
 ## Configuration
