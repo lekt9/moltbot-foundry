@@ -191,7 +191,7 @@ Give your OpenClaw agent instant access to self-writing capabilities.
 **Just tell it:**
 
 ```
-"install @getfoundry/foundry"
+"install @getfoundry/foundry-openclaw"
 ```
 
 That's it. The agent handles the rest.
@@ -202,7 +202,7 @@ That's it. The agent handles the rest.
 
 **npm:**
 ```bash
-openclaw plugins install @getfoundry/foundry
+openclaw plugins install @getfoundry/foundry-openclaw
 ```
 
 **Or add to config** (`~/.openclaw/openclaw.json`):
@@ -210,7 +210,7 @@ openclaw plugins install @getfoundry/foundry
 {
   "plugins": {
     "entries": {
-      "foundry": { "enabled": true, "source": "npm:@getfoundry/foundry" }
+      "foundry": { "enabled": true, "source": "npm:@getfoundry/foundry-openclaw" }
     }
   }
 }

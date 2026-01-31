@@ -15,7 +15,7 @@ metadata: {"openclaw":{"requires":{"bins":["node"]},"repository":"github:lekt9/o
 **Just tell your agent:**
 
 ```
-"install @getfoundry/foundry"
+"install @getfoundry/foundry-openclaw"
 ```
 
 That's it.
@@ -25,7 +25,7 @@ That's it.
 ### Manual Install
 
 ```bash
-openclaw plugins install @getfoundry/foundry
+openclaw plugins install @getfoundry/foundry-openclaw
 ```
 
 Or add to `~/.openclaw/openclaw.json`:
@@ -33,7 +33,7 @@ Or add to `~/.openclaw/openclaw.json`:
 {
   "plugins": {
     "entries": {
-      "foundry": { "enabled": true, "source": "npm:@getfoundry/foundry" }
+      "foundry": { "enabled": true, "source": "npm:@getfoundry/foundry-openclaw" }
     }
   }
 }

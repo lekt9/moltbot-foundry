@@ -1,0 +1,16 @@
+services:
+  foundry-api:
+    build: .
+    container_name: foundry-api
+    restart: unless-stopped
+    ports:
+      - "4402:4402"
+    environment:
+      - PORT=4402
+      - FDRY_TREASURY_WALLET=${FDRY_TREASURY_WALLET:-}
+      - DB_PATH=/data/skills.db
+    volumes:
+      - foundry-data:/data
+
+volumes:
+  foundry-data:
