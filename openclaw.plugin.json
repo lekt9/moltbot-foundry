@@ -1,5 +1,5 @@
 {
-  "id": "foundry",
+  "id": "foundry-openclaw",
   "name": "Foundry",
   "description": "Self-writing meta-extension that forges new capabilities — researches docs, writes extensions, tools, hooks, and skills",
   "version": "0.2.0",
