@@ -327,3 +327,120 @@ Enable with: `openclaw hooks enable welcome-message`
 - Browser skills require `browser.enabled` config
 - Use `{baseDir}` in skill content to reference the skill folder
 - Plugins can ship skills via `skills` array in openclaw.plugin.json
+
+## Publishing Extensions
+
+### npm Publishing
+
+1. **Setup package.json** for npm:
+```json
+{
+  "name": "@getfoundry/foundry",
+  "version": "0.2.0",
+  "repository": { "type": "git", "url": "https://github.com/lekt9/openclaw-foundry" },
+  "moltbot": { "extensions": ["./index.ts"] },
+  "openclaw": { "extensions": ["./index.ts"] },
+  "peerDependencies": { "moltbot": "*", "openclaw": "*" },
+  "peerDependenciesMeta": { "moltbot": { "optional": true }, "openclaw": { "optional": true } }
+}
+```
+
+2. **Create .npmignore** to reduce package size:
+```
+assets/
+server/
+.git/
+*.tsbuildinfo
+flake.nix
+flake.lock
+HN_POST.md
+REDDIT_POST.md
+```
+
+3. **Set npm token** (needs 2FA bypass for automation):
+```bash
+npm config set //registry.npmjs.org/:_authToken=npm_YOUR_TOKEN_HERE
+```
+
+4. **Publish**:
+```bash
+npm publish --access public
+```
+
+### ClawHub Publishing
+
+1. **Create skills/PLUGIN_NAME/SKILL.md** with frontmatter:
+```yaml
+---
+name: plugin-name
+description: What it does
+homepage: https://example.com
+user-invocable: false
+metadata: {"openclaw":{"requires":{"bins":["node"]},"repository":"github:user/repo"}}
+---
+```
+
+2. **Install clawhub CLI**:
+```bash
+bun add -g clawhub
+export PATH="$HOME/.bun/bin:$PATH"
+```
+
+3. **Login and publish**:
+```bash
+clawhub login
+clawhub publish skills/plugin-name --slug plugin-name --name "Plugin Name" --version 0.1.0 --tags latest
+```
+
+### Nix Flake (Optional)
+
+1. **Create flake.nix** with `buildNpmPackage`:
+```nix
+{
+  outputs = { self, nixpkgs, flake-utils }:
+    flake-utils.lib.eachDefaultSystem (system: {
+      packages.default = pkgs.buildNpmPackage {
+        pname = "plugin-name";
+        version = "0.1.0";
+        src = ./.;
+        npmDepsHash = "sha256-PLACEHOLDER";  # Run nix build to get correct hash
+        makeCacheWritable = true;  # Fix npm cache issues
+        nodejs = pkgs.nodejs_22;
+      };
+      openclawPlugin = {
+        name = "plugin-name";
+        skills = [ "${self.packages.${system}.default}/lib/openclaw/skills/plugin-name" ];
+        needs = { stateDirs = []; requiredEnv = []; };
+      };
+    });
+}
+```
+
+2. **Build and get hash**:
+```bash
+nix build 2>&1 | grep "got:"  # Copy the sha256 hash
+# Update flake.nix with correct hash, then:
+nix build  # Should succeed
+```
+
+### Installation Options (Document in README)
+
+```markdown
+## Installation
+
+### Just Ask
+"Install the Plugin Name plugin"
+
+### npm (Recommended)
+npm install -g @scope/plugin-name
+
+### GitHub Source
+{ "plugins": { "entries": { "plugin-name": { "enabled": true, "source": "github:user/repo" } } } }
+
+### Nix
+nix run github:user/repo
+
+### Manual
+git clone https://github.com/user/repo ~/.openclaw/extensions/plugin-name
+cd ~/.openclaw/extensions/plugin-name && npm install
+```

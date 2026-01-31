@@ -1,5 +1,5 @@
 {
-  "name": "@lekt9/foundry",
+  "name": "@getfoundry/foundry",
   "version": "0.2.0",
   "description": "The forge that forges itself — self-writing meta-extension for OpenClaw",
   "type": "module",

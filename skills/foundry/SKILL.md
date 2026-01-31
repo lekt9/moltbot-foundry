@@ -23,7 +23,7 @@ The agent will handle the rest.
 ### Option A: npm (Recommended)
 
 ```bash
-npm install -g @lekt9/foundry
+npm install -g @getfoundry/foundry
 ```
 
 Add to `~/.openclaw/openclaw.json`:

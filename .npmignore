@@ -1,0 +1,47 @@
+# Assets (large images)
+assets/
+server/web/public/logo.png
+
+# Development
+.git/
+.github/
+.agent/
+.agents/
+.claude/
+.codex/
+.cursor/
+.gemini/
+.opencode/
+.qwen/
+.windsurf/
+
+# Build artifacts
+node_modules/
+server/node_modules/
+server/web/node_modules/
+*.tsbuildinfo
+result
+result-*
+.direnv/
+
+# Marketing/docs (not needed for npm)
+HN_POST.md
+REDDIT_POST.md
+SWARMS_LISTING.md
+X_ARTICLE.md
+X_THREAD.md
+DEEP_INTEGRATION_PLAN.md
+
+# Server (separate deployment)
+server/
+
+# Nix (separate install method)
+flake.nix
+flake.lock
+
+# Local data
+sandbox/
+*.db
+*.db-shm
+*.db-wal
+*.log
