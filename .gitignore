@@ -13,6 +13,12 @@ DEEP_INTEGRATION_PLAN.md
 
 # Build artifacts
 tsconfig.tsbuildinfo
+result
+
+# Nix
+result
+result-*
+.direnv/
 
 # Database files
 *.db
